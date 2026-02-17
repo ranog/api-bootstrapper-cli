@@ -10,7 +10,6 @@ from api_bootstrapper_cli.core.vscode_writer import VSCodeWriter
 
 
 class TestBootstrapFlow:
-
     def test_should_coordinate_pyenv_and_poetry_setup(
         self, mocker, tmp_path: Path, mock_pyproject_toml: Path
     ):
@@ -24,9 +23,15 @@ class TestBootstrapFlow:
             CommandResult(stdout="", stderr="", returncode=0),  # install
             CommandResult(stdout="", stderr="", returncode=0),  # set_local
             CommandResult(
-                stdout="/path/to/python\n", stderr="", returncode=0
-            ),  # python_path
+                stdout="/home/user/.pyenv/versions/3.12.3\n", stderr="", returncode=0
+            ),  # get_python_path (pyenv prefix)
         ]
+
+        # Mock _get_poetry_cmd to bypass pyenv which poetry call
+        mocker.patch(
+            "api_bootstrapper_cli.core.poetry_manager.PoetryManager._get_poetry_cmd",
+            return_value="poetry",
+        )
 
         mock_poetry_exec = mocker.patch(
             "api_bootstrapper_cli.core.poetry_manager.exec_cmd"
@@ -48,23 +53,26 @@ class TestBootstrapFlow:
         poetry = PoetryManager()
         vscode = VSCodeWriter()
 
+        # Create a .venv file to simulate that it has already been created.
+        (tmp_path / ".venv").mkdir()
+
         # Step 1: Ensure Python version
         assert pyenv.is_installed()
         pyenv.ensure_python("3.12.3")
         pyenv.set_local(tmp_path, "3.12.3")
 
         # Step 2: Configure Poetry
-        poetry.ensure_installed()
-        poetry.set_in_project_venv(tmp_path, enabled=True)
+        assert poetry.is_installed()
+        poetry.configure_venv(tmp_path)
 
-        python_path = pyenv.python_path("3.12.3")
-        poetry.env_use(tmp_path, python_path)
-        poetry.install(tmp_path)
+        python_path = pyenv.get_python_path("3.12.3")
+        poetry.use_python(tmp_path, python_path)
+        poetry.install_dependencies(tmp_path)
 
         # Step 3: Configure VSCode
-        venv_path = poetry.env_path(tmp_path)
+        venv_path = poetry.get_venv_path(tmp_path)
         venv_python = venv_path / "bin" / "python"
-        settings_path = vscode.write_python_interpreter(tmp_path, venv_python)
+        settings_path = vscode.write_config(tmp_path, venv_python)
 
         # Assertions
         assert settings_path.exists()
@@ -75,6 +83,12 @@ class TestBootstrapFlow:
         venv_dir = tmp_path / ".venv"
         venv_dir.mkdir()
 
+        # Mock _get_poetry_cmd to bypass pyenv which poetry call
+        mocker.patch(
+            "api_bootstrapper_cli.core.poetry_manager.PoetryManager._get_poetry_cmd",
+            return_value="poetry",
+        )
+
         mock_exec = mocker.patch("api_bootstrapper_cli.core.poetry_manager.exec_cmd")
         mock_exec.side_effect = [
             CommandResult(stdout="Poetry 1.7.0", stderr="", returncode=0),
@@ -83,9 +97,9 @@ class TestBootstrapFlow:
         ]
 
         poetry = PoetryManager()
-        poetry.ensure_installed()
-        poetry.set_in_project_venv(tmp_path, enabled=True)
-        venv_path = poetry.env_path(tmp_path)
+        assert poetry.is_installed()
+        poetry.configure_venv(tmp_path)
+        venv_path = poetry.get_venv_path(tmp_path)
 
         assert venv_path == tmp_path / ".venv"
 
@@ -104,7 +118,7 @@ class TestBootstrapFlow:
         # Write Python interpreter
         vscode = VSCodeWriter()
         python_path = Path("/usr/bin/python3.12")
-        vscode.write_python_interpreter(tmp_path, python_path)
+        vscode.write_config(tmp_path, python_path)
 
         # Verify settings were merged
         updated_settings = json.loads(settings_file.read_text())

@@ -1,0 +1,28 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+from rich.console import Console
+
+
+@dataclass
+class RichLogger:
+    """Logger implementation using Rich Console."""
+
+    _console: Console = field(default_factory=Console)
+
+    def info(self, message: str) -> None:
+        self._console.print(f"[cyan]{message}[/cyan]")
+
+    def success(self, message: str) -> None:
+        self._console.print(f"[green]{message}[/green]")
+
+    def warning(self, message: str) -> None:
+        self._console.print(f"[yellow]{message}[/yellow]")
+
+    def error(self, message: str) -> None:
+        self._console.print(f"[red]{message}[/red]")
+
+    def print(self, message: str) -> None:
+        """Additional method for messages without formatting."""
+        self._console.print(message)
