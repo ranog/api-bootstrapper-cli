@@ -19,6 +19,8 @@ ruff = "^0.15.1"
 pytest = "^9.0.2"
 commitizen = "^4.13.7"
 pytest-cov = "^7.0.0"
+pytest-mock = "^3.15.1"
+faker = "^40.4.0"
 
 [tool.poetry.scripts]
 api-bootstrapper = "api_bootstrapper_cli.cli:main"
@@ -112,3 +114,34 @@ version_files = [
 ]
 tag_format = "v$version"
 update_changelog_on_bump = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+    "--disable-warnings",
+]
+markers = [
+    "unit: Unit tests (fast, isolated)",
+    "integration: Integration tests (multiple modules)",
+    "e2e: End-to-end tests (full workflow)",
+    "slow: Tests that take significant time",
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["tests/*", "*/tests/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
