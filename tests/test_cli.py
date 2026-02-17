@@ -1,3 +1,4 @@
+import pytest
 import typer
 from typer.testing import CliRunner
 
@@ -7,26 +8,25 @@ from api_bootstrapper_cli.cli import app, main
 runner = CliRunner()
 
 
-def test_should_show_help_with_help_flag():
-    result = runner.invoke(app, ["--help"])
+@pytest.mark.parametrize(
+    "args",
+    [
+        ["--help"],
+        ["bootstrap-env", "--help"],
+    ],
+)
+def test_should_show_help(args):
+    result = runner.invoke(app, args)
 
     assert result.exit_code == 0
-    assert "Usage" in result.stdout
-    assert "bootstrap-env" in result.stdout
+    assert "Usage: bootstrap-env" in result.stdout
 
 
 def test_should_list_bootstrap_env_command():
     result = runner.invoke(app, [])
 
     assert result.exit_code == 0
-    assert "bootstrap-env" in result.stdout or "TODO" in result.stdout
-
-
-def test_should_show_help_for_bootstrap_env_command():
-    result = runner.invoke(app, ["bootstrap-env", "--help"])
-
-    assert result.exit_code == 0
-    assert "Usage" in result.stdout
+    assert result.stdout == "bootstrap-env: TODO\n"
 
 
 def test_should_have_callable_main_function():
