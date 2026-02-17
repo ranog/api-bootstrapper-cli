@@ -1,10 +1,28 @@
 [tool.poetry]
 name = "api-bootstrapper-cli"
 version = "0.1.0"
-description = "CLI to bootstrap FastAPI projects"
-authors = ["João Paulo Ramos Nogueira"]
+description = "CLI tool to bootstrap Python projects with pyenv, Poetry, and VSCode configuration"
+authors = ["João Paulo Ramos Nogueira <joao.pnogueira@sp01.local>"]
 license = "MIT"
 readme = "README.md"
+homepage = "https://github.com/joaopnogueira/api-bootstrapper-cli"
+repository = "https://github.com/joaopnogueira/api-bootstrapper-cli"
+documentation = "https://github.com/joaopnogueira/api-bootstrapper-cli#readme"
+keywords = ["cli", "python", "pyenv", "poetry", "bootstrap", "vscode", "development", "tools"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Utilities",
+]
 packages = [{ include = "api_bootstrapper_cli", from = "src" }]
 
 [tool.poetry.dependencies]

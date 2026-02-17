@@ -1,0 +1,24 @@
+# Include documentation
+include README.md
+include LICENSE
+include CHANGELOG.md
+
+# Include type hints marker
+include src/api_bootstrapper_cli/py.typed
+
+# Exclude development and test files
+recursive-exclude tests *
+recursive-exclude .github *
+exclude .gitignore
+exclude .gitattributes
+exclude .pre-commit-config.yaml
+exclude poetry.lock
+exclude poetry.toml
+exclude .python-version
+
+# Exclude cache and build artifacts
+global-exclude __pycache__
+global-exclude *.py[cod]
+global-exclude *$py.class
+global-exclude *.so
+global-exclude .DS_Store
