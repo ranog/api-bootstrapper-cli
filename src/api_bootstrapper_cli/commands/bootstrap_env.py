@@ -73,15 +73,16 @@ def bootstrap_env(
         console.print("[bold green]✓[/bold green] [green]Environment ready![/green]")
         console.print(
             "[dim]To activate the virtual environment, run:[/dim]\n"
-            f"  [cyan]source {venv_path}/bin/activate[/cyan]"
+            "  [cyan]source $(poetry env info --path)/bin/activate[/cyan]"
         )
         console.print()
     else:
         console.print(
             "[yellow]warning[/yellow] no pyproject.toml found, skipping poetry setup"
         )
-        console.print(f"[dim]run 'poetry init' in {project_root} to create a Poetry project[/dim]")
-        
+        console.print(
+            f"[dim]run 'poetry init' in {project_root} to create a Poetry project[/dim]"
+        )
+
         settings_path = vscode.write_python_interpreter(project_root, python_path)
         console.print(f"[green]vscode[/green] wrote {settings_path}")
-

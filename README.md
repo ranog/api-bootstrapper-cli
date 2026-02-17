@@ -42,6 +42,37 @@ poetry run api-bootstrapper --help
 
 ## Usage
 
+### Minimum Requirements
+
+The target directory needs:
+- **Nothing** - Can be completely empty (will setup pyenv + VSCode only)
+- **Or** `pyproject.toml` - For full Poetry environment setup
+
+### pyproject.toml Format (if using Poetry)
+
+For projects using Poetry, ensure your `pyproject.toml` follows the correct format:
+
+```toml
+[tool.poetry]
+name = "my-project"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <your.email@example.com>"]
+package-mode = false  # Required for application projects (not libraries)
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+```
+
+**Important:**
+- Use `[tool.poetry]` section (not `[project]`)
+- Set `package-mode = false` for API/application projects that aren't installable packages
+- Without these settings, `poetry install` will fail
+
 ### Bootstrap development environment
 
 Sets up a complete Python development environment with pyenv, Poetry, and VSCode configuration.
@@ -50,21 +81,29 @@ Sets up a complete Python development environment with pyenv, Poetry, and VSCode
 # In an existing project with pyproject.toml
 api-bootstrapper bootstrap-env --python 3.12.12
 
-# In a new/empty directory
+# In a new/empty directory (will skip Poetry setup)
 api-bootstrapper bootstrap-env --python 3.12.12 --path ./my-project
 
 # Skip dependency installation
 api-bootstrapper bootstrap-env --python 3.12.12 --no-install
 ```
 
-This will:
+**What it does:**
 
+With `pyproject.toml`:
 - Install and configure the specified Python version via pyenv
 - Set local Python version (`.python-version`)
-- Configure Poetry with in-project virtualenv (if `pyproject.toml` exists)
-- Create/install Poetry environment
-- Generate VSCode settings with Python interpreter (relative paths)
+- Configure Poetry with in-project virtualenv
+- Create/install Poetry environment (`.venv`)
+- Install dependencies from `pyproject.toml`
+- Generate VSCode settings with Python interpreter (relative paths: `.venv/bin/python`)
 - Enable pytest by default
+
+Without `pyproject.toml`:
+- Install and configure the specified Python version via pyenv
+- Set local Python version (`.python-version`)
+- Generate VSCode settings with Python interpreter
+- Skip Poetry setup (you can run `poetry init` later)
 
 ### Add Alembic support (planned)
 
