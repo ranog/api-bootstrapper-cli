@@ -42,25 +42,44 @@ poetry run api-bootstrapper --help
 
 ## Usage
 
-### Add Alembic support to an existing API project
+### Bootstrap development environment
+
+Sets up a complete Python development environment with pyenv, Poetry, and VSCode configuration.
+
+```bash
+# In an existing project with pyproject.toml
+api-bootstrapper bootstrap-env --python 3.12.12
+
+# In a new/empty directory
+api-bootstrapper bootstrap-env --python 3.12.12 --path ./my-project
+
+# Skip dependency installation
+api-bootstrapper bootstrap-env --python 3.12.12 --no-install
+```
+
+This will:
+
+- Install and configure the specified Python version via pyenv
+- Set local Python version (`.python-version`)
+- Configure Poetry with in-project virtualenv (if `pyproject.toml` exists)
+- Create/install Poetry environment
+- Generate VSCode settings with Python interpreter (relative paths)
+- Enable pytest by default
+
+### Add Alembic support (planned)
 
 ```bash
 api-bootstrapper add-alembic --path .
 ```
 
-This will:
-
-- Add Alembic dependency
-- Create migrations folder
-- Inject Makefile targets
-- Wire Alembic to your project config
+_Note: This command is currently a placeholder for future implementation._
 
 ---
 
 ## Roadmap
 
-- ✅ add-alembic
-- ⬜ bootstrap-env (pyenv + poetry)
+- ✅ bootstrap-env (pyenv + poetry + vscode)
+- ⬜ add-alembic
 - ⬜ add-docker-postgres
 - ⬜ add-ruff
 - ⬜ add-mypy
