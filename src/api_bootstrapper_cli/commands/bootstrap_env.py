@@ -5,6 +5,8 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
+from api_bootstrapper_cli.core.environment_service import EnvironmentBootstrapService
+from api_bootstrapper_cli.core.logger import RichLogger
 from api_bootstrapper_cli.core.poetry_manager import PoetryManager
 from api_bootstrapper_cli.core.pyenv_manager import PyenvManager
 from api_bootstrapper_cli.core.vscode_writer import VSCodeWriter
@@ -24,65 +26,64 @@ def bootstrap_env(
         True, "--install/--no-install", help="Run 'poetry install'."
     ),
 ) -> None:
+    """Configure complete Python environment for the project.
+
+    Responsibilities of this command (presentation):
+    - Process CLI arguments
+    - Create and inject dependencies
+    - Delegate logic to service layer
+    - Display final result to user
+
+    Business logic is in EnvironmentBootstrapService.
+    """
     project_root = path.resolve()
 
-    pyenv = PyenvManager()
-    poetry = PoetryManager()
-    vscode = VSCodeWriter()
+    # Dependency Injection: create concrete instances
+    service = _create_bootstrap_service()
 
-    if not pyenv.is_installed():
-        raise typer.BadParameter("pyenv not found in PATH. Install pyenv first.")
+    try:
+        # Delegate all business logic to the service layer
+        result = service.bootstrap(
+            project_root=project_root,
+            python_version=python_version,
+            install_dependencies=install,
+        )
 
-    console.print(f"[cyan]pyenv[/cyan] ensure python {python_version}")
-    pyenv.ensure_python(python_version)
+        # Presentation layer: display result
+        _display_success(result)
 
-    console.print(f"[cyan]pyenv[/cyan] set local {python_version} in {project_root}")
-    pyenv.set_local(project_root, python_version)
+    except ValueError as e:
+        # Handle validation errors
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(code=1)
 
-    python_path = pyenv.python_path(python_version)
-    console.print(f"[green]python[/green] {python_path}")
 
-    pyproject_file = project_root / "pyproject.toml"
-    has_poetry_project = pyproject_file.exists()
+def _create_bootstrap_service() -> EnvironmentBootstrapService:
+    """Factory to create the service with its injected dependencies.
 
-    if has_poetry_project:
-        console.print("[cyan]poetry[/cyan] ensure installed")
-        poetry.ensure_installed()
+    Factory Pattern + Dependency Injection.
+    Single point of creation - facilitates testing and implementation substitution.
+    """
+    return EnvironmentBootstrapService(
+        python_env_manager=PyenvManager(),
+        dependency_manager=PoetryManager(),
+        editor_writer=VSCodeWriter(),
+        logger=RichLogger(),
+    )
 
-        console.print("[cyan]poetry[/cyan] set in-project venv (.venv)")
-        poetry.set_in_project_venv(project_root, enabled=True)
 
-        console.print("[cyan]poetry[/cyan] use python")
-        poetry.env_use(project_root, python_path)
+def _display_success(result) -> None:
+    """Display success message to the user.
 
-        if install:
-            console.print("[cyan]poetry[/cyan] install")
-            poetry.install(project_root)
+    Presentation responsibility separated from logic.
+    """
+    console.print()
+    console.print("[bold green]✓[/bold green] [green]Environment ready![/green]")
 
-        venv_path = poetry.env_path(project_root)
-        console.print(f"[green]venv[/green] {venv_path}")
-
-        venv_python = venv_path / "bin" / "python"
-        if not venv_python.exists():
-            venv_python = venv_path / "Scripts" / "python.exe"
-
-        settings_path = vscode.write_python_interpreter(project_root, venv_python)
-        console.print(f"[green]vscode[/green] wrote {settings_path}")
-
-        console.print()
-        console.print("[bold green]✓[/bold green] [green]Environment ready![/green]")
+    if result.has_poetry_project and result.venv_path:
         console.print(
             "[dim]To activate the virtual environment, run:[/dim]\n"
-            "  [cyan]source $(poetry env info --path)/bin/activate[/cyan]"
-        )
-        console.print()
-    else:
-        console.print(
-            "[yellow]warning[/yellow] no pyproject.toml found, skipping poetry setup"
-        )
-        console.print(
-            f"[dim]run 'poetry init' in {project_root} to create a Poetry project[/dim]"
+            f"  [cyan]source {result.venv_path}/bin/activate[/cyan]"
         )
 
-        settings_path = vscode.write_python_interpreter(project_root, python_path)
-        console.print(f"[green]vscode[/green] wrote {settings_path}")
+    console.print()
