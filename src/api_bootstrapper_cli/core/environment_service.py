@@ -184,14 +184,14 @@ class EnvironmentBootstrapService:
         Returns:
             Path to the Python executable
         """
-        self._logger.info(f"pyenv ensure python {python_version}")
+        self._logger.info(f"[bold]Setting up Python {python_version}[/bold]")
         self._python_env.ensure_python(python_version)
 
-        self._logger.info(f"pyenv set local {python_version} in {project_root}")
+        self._logger.info(f"Configuring pyenv local version")
         self._python_env.set_local(project_root, python_version)
 
         python_path = self._python_env.get_python_path(python_version)
-        self._logger.success(f"python {python_path}")
+        self._logger.success(f"Python configured: {python_path}")
 
         return python_path
 
@@ -201,12 +201,12 @@ class EnvironmentBootstrapService:
         Args:
             python_version: Python version in X.Y.Z format
         """
-        self._logger.info("installing pip, setuptools, wheel, poetry")
+        self._logger.info("[bold]Installing Python tooling[/bold]")
         self._python_env.install_pip_packages(
             python_version,
             ["pip", "setuptools", "wheel", "poetry"],
         )
-        self._logger.success("python dependencies installed")
+        self._logger.success("Python tooling installed")
 
     def _ensure_pyproject_exists(self, project_root: Path, python_version: str) -> None:
         """Ensure pyproject.toml exists, creating minimal if needed.
@@ -230,31 +230,32 @@ class EnvironmentBootstrapService:
         install_dependencies: bool,
     ) -> EnvironmentSetupResult:
         """Complete setup with Poetry."""
-        self._logger.info("poetry configure in-project venv (.venv)")
+        self._logger.info("[bold]Configuring Poetry environment[/bold]")
         self._deps.configure_venv(project_root)
 
-        self._logger.info("poetry use python")
+        self._logger.info("Linking Poetry to Python version")
         self._deps.use_python(project_root, python_path)
 
         # Always ensure venv exists (important for projects without dependencies)
         venv_path_dir = project_root / ".venv"
         if not venv_path_dir.exists():
-            self._logger.info("poetry create venv")
+            self._logger.info("Creating virtual environment")
             self._deps.install_dependencies(project_root)
 
         if install_dependencies:
-            self._logger.info("poetry install dependencies")
+            self._logger.info("[bold]Installing project dependencies[/bold]")
             self._deps.install_dependencies(project_root)
 
         # Get venv information
         venv_path = self._deps.get_venv_path(project_root)
         venv_python = self._deps.get_venv_python(project_root)
 
-        self._logger.success(f"venv {venv_path}")
+        self._logger.success(f"Virtual environment ready: {venv_path}")
 
         # Configure editor with venv Python
+        self._logger.info("Writing VSCode configuration")
         editor_config = self._editor.write_config(project_root, venv_python)
-        self._logger.success(f"vscode wrote {editor_config}")
+        self._logger.success(f"VSCode configured: {editor_config}")
 
         return EnvironmentSetupResult(
             python_version=python_version,

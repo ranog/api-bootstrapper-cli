@@ -4,7 +4,12 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from rich.console import Console
+
 from api_bootstrapper_cli.core.shell import ShellError, exec_cmd
+
+
+console = Console()
 
 
 @dataclass(frozen=True)
@@ -51,9 +56,15 @@ class PyenvManager:
         if version in self._get_installed_versions():
             return
 
-        exec_cmd(
-            ["pyenv", "install", "-s", version], check=True, env=self._get_clean_env()
-        )
+        with console.status(
+            f"[cyan]Installing Python {version} via pyenv...[/cyan]",
+            spinner="dots",
+        ):
+            exec_cmd(
+                ["pyenv", "install", "-s", version],
+                check=True,
+                env=self._get_clean_env(),
+            )
 
     def set_local(self, project_root: Path, version: str) -> None:
         """Set the project's local Python version.
@@ -97,11 +108,16 @@ class PyenvManager:
             packages: List of package names to install
         """
         python_path = self.get_python_path(version)
-        exec_cmd(
-            [str(python_path), "-m", "pip", "install", "--upgrade", *packages],
-            check=True,
-            env=self._get_clean_env(),
-        )
+        packages_str = ", ".join(packages)
+        with console.status(
+            f"[cyan]Installing {packages_str}...[/cyan]",
+            spinner="dots",
+        ):
+            exec_cmd(
+                [str(python_path), "-m", "pip", "install", "--upgrade", *packages],
+                check=True,
+                env=self._get_clean_env(),
+            )
 
     def _get_installed_versions(self) -> set[str]:
         """Return set of Python versions installed via pyenv.

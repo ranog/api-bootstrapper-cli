@@ -86,9 +86,9 @@ def test_should_execute_full_bootstrap_workflow(
     )
 
     assert result.exit_code == 0
-    assert "pyenv" in result.stdout
-    assert "poetry" in result.stdout
-    assert "vscode" in result.stdout
+    assert "Python" in result.stdout
+    assert "Poetry" in result.stdout
+    assert "VSCode" in result.stdout
     vscode_settings = project_path / ".vscode" / "settings.json"
     assert vscode_settings.exists()
 

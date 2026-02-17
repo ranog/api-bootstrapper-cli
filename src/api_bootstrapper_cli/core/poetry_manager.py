@@ -6,7 +6,12 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
+from rich.console import Console
+
 from api_bootstrapper_cli.core.shell import ShellError, exec_cmd
+
+
+console = Console()
 
 
 @dataclass(frozen=True)
@@ -174,12 +179,16 @@ class PoetryManager:
         # Ensure venv exists before installing
         self._ensure_venv_exists(project_root)
 
-        exec_cmd(
-            [self._get_poetry_cmd(), "install", "--no-root"],
-            cwd=str(project_root),
-            check=True,
-            env=self._get_clean_env(),
-        )
+        with console.status(
+            "[cyan]Installing dependencies with Poetry...[/cyan]",
+            spinner="dots",
+        ):
+            exec_cmd(
+                [self._get_poetry_cmd(), "install", "--no-root"],
+                cwd=str(project_root),
+                check=True,
+                env=self._get_clean_env(),
+            )
 
     def _resolve_venv_python(self, venv_path: Path) -> Path:
         """Resolve the Python path in venv considering the operating system.
