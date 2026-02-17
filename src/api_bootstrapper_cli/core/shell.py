@@ -19,6 +19,7 @@ def exec_cmd(
     cmd: list[str],
     cwd: str | None = None,
     check: bool = True,
+    env: dict[str, str] | None = None,
 ) -> CommandResult:
     try:
         result = subprocess.run(
@@ -27,6 +28,7 @@ def exec_cmd(
             check=check,
             capture_output=True,
             text=True,
+            env=env,
         )
         return CommandResult(
             stdout=result.stdout,
