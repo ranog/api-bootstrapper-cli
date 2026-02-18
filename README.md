@@ -34,7 +34,7 @@ pip install api-bootstrapper-cli
 ### From source (for development)
 
 ```bash
-git clone https://github.com/joaopnogueira/api-bootstrapper-cli
+git clone https://github.com/ranog/api-bootstrapper-cli
 cd api-bootstrapper-cli
 poetry install
 ```
@@ -42,7 +42,7 @@ poetry install
 ### For your team (install from Git)
 
 ```bash
-pip install git+https://github.com/joaopnogueira/api-bootstrapper-cli.git
+pip install git+https://github.com/ranog/api-bootstrapper-cli.git
 ```
 
 ---
@@ -198,7 +198,7 @@ Designed for teams that want **consistent environments** and **deterministic set
 
 ```bash
 # Clone and install
-git clone https://github.com/joaopnogueira/api-bootstrapper-cli.git
+git clone https://github.com/ranog/api-bootstrapper-cli.git
 cd api-bootstrapper-cli
 poetry install
 

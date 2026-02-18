@@ -5,9 +5,9 @@ description = "CLI tool to bootstrap Python projects with pyenv, Poetry, and VSC
 authors = ["João Paulo Ramos Nogueira <joao.pnogueira@sp01.local>"]
 license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/joaopnogueira/api-bootstrapper-cli"
-repository = "https://github.com/joaopnogueira/api-bootstrapper-cli"
-documentation = "https://github.com/joaopnogueira/api-bootstrapper-cli#readme"
+homepage = "https://github.com/ranog/api-bootstrapper-cli"
+repository = "https://github.com/ranog/api-bootstrapper-cli"
+documentation = "https://github.com/ranog/api-bootstrapper-cli#readme"
 keywords = ["cli", "python", "pyenv", "poetry", "bootstrap", "vscode", "development", "tools"]
 classifiers = [
     "Development Status :: 4 - Beta",

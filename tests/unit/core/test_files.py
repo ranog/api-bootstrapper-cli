@@ -8,6 +8,7 @@ from api_bootstrapper_cli.core.files import (
     create_minimal_pyproject,
     ensure_dir,
     read_text,
+    update_python_constraint,
     write_text,
 )
 
@@ -117,12 +118,97 @@ def test_should_not_overwrite_existing_pyproject(tmp_path: Path):
 
 
 def test_should_extract_major_minor_version_from_python_version(tmp_path: Path):
-    # Test with full version (major.minor.patch)
     result = create_minimal_pyproject(tmp_path, python_version="3.13.9")
     content = result.read_text()
+
     assert 'python = "^3.13"' in content
 
-    # Test with just major.minor (using a different directory)
     test2_dir = tmp_path / "test2"
     test2_dir.mkdir()
     result2 = create_minimal_pyproject(test2_dir, python_version="3.12")
+    content2 = result2.read_text()
+
+    assert 'python = "^3.12"' in content2
+
+
+def test_update_python_constraint_should_update_existing_version(tmp_path: Path):
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text("""[tool.poetry]
+name = "test-project"
+version = "0.1.0"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+requests = "^2.28"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+""")
+
+    updated = update_python_constraint(pyproject, "3.9.24")
+
+    assert updated is True
+    content = pyproject.read_text()
+    assert 'python = "^3.9"' in content
+    assert 'requests = "^2.28"' in content
+
+
+def test_update_python_constraint_should_return_false_if_already_correct(
+    tmp_path: Path,
+):
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text("""[tool.poetry]
+name = "test-project"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+""")
+
+    updated = update_python_constraint(pyproject, "3.12.3")
+
+    assert updated is False
+    content = pyproject.read_text()
+    assert 'python = "^3.12"' in content
+
+
+def test_update_python_constraint_should_return_false_if_file_not_exists(
+    tmp_path: Path,
+):
+    pyproject = tmp_path / "pyproject.toml"
+
+    updated = update_python_constraint(pyproject, "3.12")
+
+    assert updated is False
+
+
+def test_update_python_constraint_should_handle_single_quotes(tmp_path: Path):
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text("""[tool.poetry]
+name = "test-project"
+
+[tool.poetry.dependencies]
+python = '^3.12'
+""")
+
+    updated = update_python_constraint(pyproject, "3.11")
+
+    assert updated is True
+    content = pyproject.read_text()
+    assert 'python = "^3.11"' in content
+
+
+def test_update_python_constraint_should_handle_spaces_around_equals(tmp_path: Path):
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text("""[tool.poetry]
+name = "test-project"
+
+[tool.poetry.dependencies]
+python   =   "^3.12"
+""")
+
+    updated = update_python_constraint(pyproject, "3.10.5")
+
+    assert updated is True
+    content = pyproject.read_text()
+    assert 'python = "^3.10"' in content or 'python   =   "^3.10"' in content

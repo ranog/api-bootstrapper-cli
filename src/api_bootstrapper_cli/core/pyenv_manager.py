@@ -28,11 +28,8 @@ class PyenvManager:
         """
         env = os.environ.copy()
 
-        # Remove active venv variables
         env.pop("VIRTUAL_ENV", None)
         env.pop("POETRY_ACTIVE", None)
-
-        # Remove Python path variables that could interfere
         env.pop("PYTHONPATH", None)
         env.pop("PYTHONHOME", None)
         env.pop("PYTHONSTARTUP", None)
@@ -40,7 +37,6 @@ class PyenvManager:
         return env
 
     def is_installed(self) -> bool:
-        """Check if pyenv is available on the system."""
         try:
             exec_cmd(["pyenv", "--version"], check=True, env=self._get_clean_env())
             return True
@@ -48,11 +44,6 @@ class PyenvManager:
             return False
 
     def ensure_python(self, version: str) -> None:
-        """Ensure the Python version is installed via pyenv.
-
-        Args:
-            version: Python version in X.Y.Z format
-        """
         if version in self._get_installed_versions():
             return
 
@@ -67,12 +58,6 @@ class PyenvManager:
             )
 
     def set_local(self, project_root: Path, version: str) -> None:
-        """Set the project's local Python version.
-
-        Args:
-            project_root: Project root directory
-            version: Python version in X.Y.Z format
-        """
         exec_cmd(
             ["pyenv", "local", version],
             cwd=str(project_root),
@@ -81,17 +66,7 @@ class PyenvManager:
         )
 
     def get_python_path(self, version: str) -> Path:
-        """Return the path to the Python executable for the version.
-
-        Uses pyenv prefix to get the installation path for the specific version,
-        independent of the current directory context.
-
-        Args:
-            version: Python version in X.Y.Z format
-
-        Returns:
-            Path to the Python executable
-        """
+        """Return path to Python executable (uses pyenv prefix, independent of cwd)."""
         res = exec_cmd(
             ["pyenv", "prefix", version],
             check=True,
@@ -101,12 +76,6 @@ class PyenvManager:
         return python_prefix / "bin" / "python"
 
     def install_pip_packages(self, version: str, packages: list[str]) -> None:
-        """Install pip packages in the Python version.
-
-        Args:
-            version: Python version in X.Y.Z format
-            packages: List of package names to install
-        """
         python_path = self.get_python_path(version)
         packages_str = ", ".join(packages)
         with console.status(
@@ -120,10 +89,6 @@ class PyenvManager:
             )
 
     def _get_installed_versions(self) -> set[str]:
-        """Return set of Python versions installed via pyenv.
-
-        Private method - implementation detail.
-        """
         res = exec_cmd(
             ["pyenv", "versions", "--bare"],
             check=True,

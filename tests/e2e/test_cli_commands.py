@@ -44,23 +44,18 @@ def test_should_execute_full_bootstrap_workflow(
 
     mock_pyenv_exec = mocker.patch("api_bootstrapper_cli.core.pyenv_manager.exec_cmd")
     mock_pyenv_exec.side_effect = [
-        CommandResult(stdout="pyenv 2.3.0", stderr="", returncode=0),  # is_installed
-        CommandResult(
-            stdout="3.12.3\n", stderr="", returncode=0
-        ),  # _get_installed_versions (in ensure_python)
-        CommandResult(stdout="", stderr="", returncode=0),  # set_local
+        CommandResult(stdout="pyenv 2.3.0", stderr="", returncode=0),
+        CommandResult(stdout="3.12.3\n", stderr="", returncode=0),
+        CommandResult(stdout="", stderr="", returncode=0),
         CommandResult(
             stdout="/home/user/.pyenv/versions/3.12.3\n", stderr="", returncode=0
-        ),  # get_python_path (pyenv prefix)
+        ),
         CommandResult(
             stdout="/home/user/.pyenv/versions/3.12.3\n", stderr="", returncode=0
-        ),  # get_python_path (in install_pip_packages)
-        CommandResult(
-            stdout="", stderr="", returncode=0
-        ),  # install_pip_packages (pip install)
+        ),
+        CommandResult(stdout="", stderr="", returncode=0),
     ]
 
-    # Mock _get_poetry_cmd to bypass pyenv which poetry call
     mocker.patch(
         "api_bootstrapper_cli.core.poetry_manager.PoetryManager._get_poetry_cmd",
         return_value="poetry",

@@ -31,7 +31,6 @@ class PoetryManager:
         Returns:
             Absolute path to poetry executable, or "poetry" as fallback
         """
-        # First try: Ask pyenv for the real poetry path (bypasses shims)
         try:
             result = exec_cmd(
                 ["pyenv", "which", "poetry"],
@@ -42,10 +41,8 @@ class PoetryManager:
             if poetry_path and Path(poetry_path).exists():
                 return poetry_path
         except (ShellError, FileNotFoundError):
-            # pyenv not available or poetry not found via pyenv
             pass
 
-        # Second try: Search clean PATH (without pyenv shims)
         env = self._get_clean_env()
         clean_path = env.get("PATH", "")
         for path_dir in clean_path.split(os.pathsep):
@@ -55,7 +52,6 @@ class PoetryManager:
             if poetry_path.exists() and os.access(poetry_path, os.X_OK):
                 return str(poetry_path)
 
-        # Fallback to "poetry" command - will work with clean env
         return "poetry"
 
     def _get_clean_env(self) -> dict[str, str]:
@@ -70,18 +66,13 @@ class PoetryManager:
         """
         env = os.environ.copy()
 
-        # Remove active venv variables
         env.pop("VIRTUAL_ENV", None)
         env.pop("POETRY_ACTIVE", None)
-
-        # Remove Python path variables that could interfere
         env.pop("PYTHONPATH", None)
         env.pop("PYTHONHOME", None)
         env.pop("PYTHONSTARTUP", None)
         env.pop("PYTHONUSERBASE", None)
 
-        # Remove pyenv shims from PATH to prevent version switching
-        # This ensures poetry runs from its actual installation location
         path = env.get("PATH", "")
         path_dirs = path.split(os.pathsep)
         clean_path_dirs = [d for d in path_dirs if ".pyenv/shims" not in d]
@@ -90,7 +81,6 @@ class PoetryManager:
         return env
 
     def is_installed(self) -> bool:
-        """Check if Poetry is available on the system."""
         try:
             exec_cmd(
                 [self._get_poetry_cmd(), "--version"],
@@ -102,11 +92,6 @@ class PoetryManager:
             return False
 
     def configure_venv(self, project_root: Path) -> None:
-        """Configure Poetry to use in-project venv (.venv).
-
-        Args:
-            project_root: Project root directory
-        """
         exec_cmd(
             [
                 self._get_poetry_cmd(),
@@ -123,11 +108,7 @@ class PoetryManager:
     def use_python(self, project_root: Path, python_path: Path) -> None:
         """Set which Python interpreter Poetry should use.
 
-        This command creates the virtual environment if it doesn't exist yet.
-
-        Args:
-            project_root: Project root directory
-            python_path: Path to the Python executable
+        NOTE: Creates the virtual environment if it doesn't exist yet.
         """
         exec_cmd(
             [self._get_poetry_cmd(), "env", "use", str(python_path)],
@@ -137,46 +118,22 @@ class PoetryManager:
         )
 
     def get_venv_path(self, project_root: Path) -> Path:
-        """Return the path to the project's virtual environment.
+        """Return path to the project's virtual environment.
 
-        Since we configure virtualenvs.in-project=true, the venv is always
-        at <project_root>/.venv. We don't trust `poetry env info -p` as it
-        may return the wrong venv when executed from within another Poetry project.
-
-        Args:
-            project_root: Project root directory
-
-        Returns:
-            Path to the virtual environment (always absolute)
+        NOTE: We don't use `poetry env info -p` as it may return wrong venv
+        when executed from within another Poetry project.
         """
-        # With virtualenvs.in-project=true, venv is always in .venv
         return (project_root / ".venv").resolve()
 
     def get_venv_python(self, project_root: Path) -> Path:
-        """Return the path to the Python executable in the virtual environment.
-
-        Encapsulates the logic for Windows/Unix differences.
-
-        Args:
-            project_root: Project root directory
-
-        Returns:
-            Path to the Python executable in the venv
-        """
         venv_path = self.get_venv_path(project_root)
         return self._resolve_venv_python(venv_path)
 
     def install_dependencies(self, project_root: Path) -> None:
-        """Install the project's dependencies using Poetry.
+        """Install project dependencies with Poetry.
 
-        Uses --no-root to not install the project as a package,
-        allowing use in projects that are applications (not libraries)
-        without needing to configure package-mode = false.
-
-        Args:
-            project_root: Project root directory
+        NOTE: Uses --no-root to support app projects without package-mode config.
         """
-        # Ensure venv exists before installing
         self._ensure_venv_exists(project_root)
 
         with console.status(
@@ -191,36 +148,16 @@ class PoetryManager:
             )
 
     def _resolve_venv_python(self, venv_path: Path) -> Path:
-        """Resolve the Python path in venv considering the operating system.
-
-        Private method - implementation detail.
-
-        Args:
-            venv_path: Path to the virtual environment
-
-        Returns:
-            Path to the Python executable
-        """
         if platform.system() == "Windows":
             return venv_path / "Scripts" / "python.exe"
         return venv_path / "bin" / "python"
 
     def _ensure_venv_exists(self, project_root: Path) -> None:
-        """Ensure the virtual environment has been created.
-
-        In some cases (projects without dependencies), Poetry may not create
-        the venv automatically. This method forces creation.
-
-        Args:
-            project_root: Project root directory
-        """
-        # Check if .venv already exists in the project (in-project venv)
+        """Ensure venv exists (Poetry may skip creation for projects without dependencies)."""
         venv_dir = project_root / ".venv"
         if venv_dir.exists() and venv_dir.is_dir():
             return
 
-        # If it doesn't exist, force creation by running install
-        # This ensures the venv is created even without dependencies
         exec_cmd(
             [self._get_poetry_cmd(), "install", "--no-root"],
             cwd=str(project_root),

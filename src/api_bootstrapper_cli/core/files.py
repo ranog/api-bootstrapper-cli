@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 
@@ -37,11 +38,9 @@ def create_minimal_pyproject(
 
     pyproject_path = project_root / "pyproject.toml"
 
-    # Don't overwrite if it already exists
     if pyproject_path.exists():
         return pyproject_path
 
-    # Extract major.minor from version (e.g., "3.13.9" -> "3.13")
     version_parts = python_version.split(".")
     major_minor = f"{version_parts[0]}.{version_parts[1]}"
 
@@ -62,3 +61,42 @@ build-backend = "poetry.core.masonry.api"
 
     write_text(pyproject_path, content)
     return pyproject_path
+
+
+def update_python_constraint(pyproject_path: Path, python_version: str) -> bool:
+    """Update Python version constraint in existing pyproject.toml.
+
+    Args:
+        pyproject_path: Path to pyproject.toml
+        python_version: Python version (e.g., "3.12", "3.9.24")
+
+    Returns:
+        True if updated, False if already correct or file doesn't exist
+    """
+    if not pyproject_path.exists():
+        return False
+
+    version_parts = python_version.split(".")
+    major_minor = f"{version_parts[0]}.{version_parts[1]}"
+    target_constraint = f"^{major_minor}"
+
+    content = read_text(pyproject_path)
+
+    python_constraint_pattern = r'(python\s*=\s*)["\']([^"\'\n]+)["\']'
+
+    if not (match := re.search(python_constraint_pattern, content)):
+        return False
+
+    current_constraint = match.group(2)
+    if current_constraint == target_constraint:
+        return False
+
+    new_content = re.sub(
+        python_constraint_pattern,
+        f'\\1"{target_constraint}"',
+        content,
+        count=1,
+    )
+
+    write_text(pyproject_path, new_content, overwrite=True)
+    return True

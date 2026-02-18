@@ -35,5 +35,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Command help with detailed descriptions
 - MIT License
 
-[Unreleased]: https://github.com/joaopnogueira/api-bootstrapper-cli/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/joaopnogueira/api-bootstrapper-cli/releases/tag/v0.1.0
+[Unreleased]: https://github.com/ranog/api-bootstrapper-cli/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/ranog/api-bootstrapper-cli/releases/tag/v0.1.0

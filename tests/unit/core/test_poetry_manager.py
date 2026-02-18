@@ -20,7 +20,6 @@ def test_should_verify_poetry_is_installed(mocker):
     result = manager.is_installed()
 
     assert result is True
-    # Check that exec_cmd was called with poetry command (absolute path)
     assert mock_exec.call_count == 1
     call_args = mock_exec.call_args
     assert call_args[0][0] == ["poetry", "--version"]
@@ -38,7 +37,6 @@ def test_should_configure_in_project_venv(mocker, tmp_path: Path):
 
     manager.configure_venv(tmp_path)
 
-    # Checks only the main arguments, ignoring the env parameter
     assert mock_exec.call_count == 1
     call_args = mock_exec.call_args
     assert call_args[0][0] == [
@@ -53,7 +51,6 @@ def test_should_configure_in_project_venv(mocker, tmp_path: Path):
 
 
 def test_should_use_specific_python_version(mocker, tmp_path: Path):
-    # Create a .venv file to simulate that it has already been created.
     (tmp_path / ".venv").mkdir()
 
     mocker.patch(
@@ -67,7 +64,6 @@ def test_should_use_specific_python_version(mocker, tmp_path: Path):
 
     manager.use_python(tmp_path, python_path)
 
-    # Checks only the main arguments, ignoring the env parameter
     assert mock_exec.call_count == 1
     call_args = mock_exec.call_args
     assert call_args[0][0] == ["poetry", "env", "use", str(python_path)]
@@ -84,7 +80,6 @@ def test_should_get_virtualenv_path(mocker, tmp_path: Path):
 
 
 def test_should_install_dependencies(mocker, tmp_path: Path):
-    # Create .venv to prevent _ensure_venv_exists from making extra call
     (tmp_path / ".venv").mkdir()
 
     mocker.patch(
@@ -99,9 +94,74 @@ def test_should_install_dependencies(mocker, tmp_path: Path):
 
     manager.install_dependencies(tmp_path)
 
-    # Checks only the main arguments, ignoring the env parameter
     assert mock_exec.call_count == 1
     call_args = mock_exec.call_args
     assert call_args[0][0] == ["poetry", "install", "--no-root"]
     assert call_args[1]["cwd"] == str(tmp_path)
     assert call_args[1]["check"] is True
+
+
+def test_poetry_commands_use_pyenv_path_when_available(mocker, tmp_path: Path):
+    poetry_path = tmp_path / "poetry-executable"
+    poetry_path.touch()
+    poetry_path.chmod(0o755)
+
+    mock_exec = mocker.patch("api_bootstrapper_cli.core.poetry_manager.exec_cmd")
+    mock_exec.side_effect = [
+        CommandResult(stdout=f"{poetry_path}\n", stderr="", returncode=0),
+        CommandResult(stdout="Poetry version 1.7.0", stderr="", returncode=0),
+    ]
+    mocker.patch(
+        "api_bootstrapper_cli.core.poetry_manager.Path.exists", return_value=True
+    )
+
+    manager = PoetryManager()
+    result = manager.is_installed()
+
+    assert result is True
+    assert mock_exec.call_count == 2
+    assert mock_exec.call_args_list[0][0][0] == ["pyenv", "which", "poetry"]
+    assert mock_exec.call_args_list[1][0][0] == [str(poetry_path), "--version"]
+
+
+def test_poetry_commands_search_path_when_pyenv_fails(mocker, tmp_path: Path):
+    poetry_path = tmp_path / "bin" / "poetry"
+    poetry_path.parent.mkdir(parents=True)
+    poetry_path.touch()
+    poetry_path.chmod(0o755)
+
+    mock_exec = mocker.patch("api_bootstrapper_cli.core.poetry_manager.exec_cmd")
+    mock_exec.side_effect = [
+        FileNotFoundError("pyenv not found"),
+        CommandResult(stdout="Poetry version 1.7.0", stderr="", returncode=0),
+    ]
+
+    mock_env = mocker.patch("api_bootstrapper_cli.core.poetry_manager.os.environ")
+    mock_env.copy.return_value = {"PATH": str(poetry_path.parent)}
+    mock_env.get.return_value = str(poetry_path.parent)
+
+    manager = PoetryManager()
+    result = manager.is_installed()
+
+    assert result is True
+    assert mock_exec.call_count == 2
+    assert mock_exec.call_args_list[1][0][0] == [str(poetry_path), "--version"]
+
+
+def test_poetry_commands_fallback_to_poetry_string(mocker):
+    mock_exec = mocker.patch("api_bootstrapper_cli.core.poetry_manager.exec_cmd")
+    mock_exec.side_effect = [
+        FileNotFoundError("pyenv not found"),
+        CommandResult(stdout="Poetry version 1.7.0", stderr="", returncode=0),
+    ]
+
+    mock_env = mocker.patch("api_bootstrapper_cli.core.poetry_manager.os.environ")
+    mock_env.copy.return_value = {"PATH": ""}
+    mock_env.get.return_value = ""
+
+    manager = PoetryManager()
+    result = manager.is_installed()
+
+    assert result is True
+    assert mock_exec.call_count == 2
+    assert mock_exec.call_args_list[1][0][0] == ["poetry", "--version"]

@@ -6,7 +6,7 @@ Thank you for your interest in contributing! This document provides guidelines a
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/joaopnogueira/api-bootstrapper-cli.git
+   git clone https://github.com/ranog/api-bootstrapper-cli.git
    cd api-bootstrapper-cli
    ```
 

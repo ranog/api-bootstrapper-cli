@@ -15,7 +15,6 @@ def test_should_detect_pyenv_is_installed(mocker):
     manager = PyenvManager()
 
     assert manager.is_installed() is True
-    # Check only the command arguments, ignore env parameter
     assert mock_exec.call_count == 1
     call_args = mock_exec.call_args
     assert call_args[0][0] == ["pyenv", "--version"]
@@ -41,7 +40,6 @@ def test_should_list_installed_versions(mocker):
     versions = manager._get_installed_versions()
 
     assert versions == {"3.11.0", "3.12.0", "3.12.3"}
-    # Check only the command arguments, ignore env parameter
     assert mock_exec.call_count == 1
     call_args = mock_exec.call_args
     assert call_args[0][0] == ["pyenv", "versions", "--bare"]
@@ -80,7 +78,6 @@ def test_should_set_local_version(mocker, tmp_path: Path):
 
     manager.set_local(tmp_path, "3.12.3")
 
-    # Check only the command arguments, ignore env parameter
     assert mock_exec.call_count == 1
     call_args = mock_exec.call_args
     assert call_args[0][0] == ["pyenv", "local", "3.12.3"]
@@ -100,7 +97,6 @@ def test_should_get_python_path(mocker):
     path = manager.get_python_path("3.12.0")
 
     assert path == Path("/home/user/.pyenv/versions/3.12.0/bin/python")
-    # Verify pyenv prefix was called with the version
     assert mock_exec.call_count == 1
     call_args = mock_exec.call_args
     assert call_args[0][0] == ["pyenv", "prefix", "3.12.0"]
