@@ -19,6 +19,7 @@ def test_should_show_bootstrap_env_help(expected_bootstrap_help):
     result = runner.invoke(app, ["bootstrap-env", "--help"])
 
     assert result.exit_code == 0
+    print(result.stdout)
     assert result.stdout == expected_bootstrap_help
 
 
