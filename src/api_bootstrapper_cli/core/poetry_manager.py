@@ -21,11 +21,14 @@ class PoetryManager:
     Encapsulates all details of Poetry interaction and venv structure.
     """
 
-    def _get_poetry_cmd(self) -> str:
+    def _get_poetry_cmd(self, project_root: Path | None = None) -> str:
         """Get absolute path to poetry executable.
 
         If using pyenv, gets the real poetry path from pyenv to bypass shims.
         Otherwise falls back to searching PATH or using "poetry" command.
+
+        Args:
+            project_root: Project directory with .python-version for pyenv context
 
         Returns:
             Absolute path to poetry executable, or "poetry" as fallback
@@ -35,6 +38,7 @@ class PoetryManager:
                 ["pyenv", "which", "poetry"],
                 check=True,
                 env=self._get_clean_env(),
+                cwd=str(project_root) if project_root else None,
             )
             poetry_path = result.stdout.strip()
             if poetry_path and Path(poetry_path).exists():
@@ -93,7 +97,7 @@ class PoetryManager:
     def configure_venv(self, project_root: Path) -> None:
         exec_cmd(
             [
-                self._get_poetry_cmd(),
+                self._get_poetry_cmd(project_root),
                 "config",
                 "virtualenvs.in-project",
                 "true",
@@ -110,7 +114,7 @@ class PoetryManager:
         NOTE: Creates the virtual environment if it doesn't exist yet.
         """
         exec_cmd(
-            [self._get_poetry_cmd(), "env", "use", str(python_path)],
+            [self._get_poetry_cmd(project_root), "env", "use", str(python_path)],
             cwd=str(project_root),
             check=True,
             env=self._get_clean_env(),
@@ -140,7 +144,7 @@ class PoetryManager:
             spinner="dots",
         ):
             exec_cmd(
-                [self._get_poetry_cmd(), "install", "--no-root"],
+                [self._get_poetry_cmd(project_root), "install", "--no-root"],
                 cwd=str(project_root),
                 check=True,
                 env=self._get_clean_env(),
@@ -158,7 +162,7 @@ class PoetryManager:
             return
 
         exec_cmd(
-            [self._get_poetry_cmd(), "install", "--no-root"],
+            [self._get_poetry_cmd(project_root), "install", "--no-root"],
             cwd=str(project_root),
             check=True,
             env=self._get_clean_env(),
