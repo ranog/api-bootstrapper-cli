@@ -26,15 +26,13 @@ def bootstrap_env(
         True, "--install/--no-install", help="Run 'poetry install'."
     ),
 ) -> None:
-    """Configure complete Python environment for the project.
+    """Setup Python environment with pyenv, Poetry, and VSCode configuration.
 
-    Responsibilities of this command (presentation):
-    - Process CLI arguments
-    - Create and inject dependencies
-    - Delegate logic to service layer
-    - Display final result to user
-
-    Business logic is in EnvironmentBootstrapService.
+    Creates or configures:
+    - Python version via pyenv (.python-version)
+    - Poetry virtual environment (.venv)
+    - VSCode Python settings (.vscode/settings.json)
+    - Minimal pyproject.toml (if doesn't exist)
     """
     project_root = path.resolve()
 
