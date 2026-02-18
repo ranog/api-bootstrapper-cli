@@ -3,7 +3,7 @@
 [![Python Version](https://img.shields.io/pypi/pyversions/api-bootstrapper-cli)](https://pypi.org/project/api-bootstrapper-cli/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
-[![Tests](https://img.shields.io/badge/tests-53%20passing-brightgreen)](tests/)
+[![Tests](https://github.com/ranog/api-bootstrapper-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/ranog/api-bootstrapper-cli/actions/workflows/ci.yml)
 
 A modular and extensible CLI for bootstrapping Python projects with opinionated platform defaults.
 
@@ -19,7 +19,7 @@ Automates the setup of **pyenv**, **Poetry**, and **VSCode** configuration in a 
 - 🚀 **Smart Detection** - Skips setup if environment already exists
 - 🎯 **Zero Configuration** - Creates minimal `pyproject.toml` if missing
 - 🔒 **Environment Isolation** - Clean environment to prevent version conflicts
-- ✅ **Battle-tested** - Comprehensive test suite with 53 passing tests
+- ✅ **Battle-tested** - Comprehensive test suite with high coverage
 
 ---
 
