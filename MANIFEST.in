@@ -1,7 +1,6 @@
 # Include documentation
 include README.md
 include LICENSE
-include CHANGELOG.md
 
 # Include type hints marker
 include src/api_bootstrapper_cli/py.typed

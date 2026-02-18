@@ -201,9 +201,6 @@ Designed for teams that want **consistent environments** and **deterministic set
 git clone https://github.com/ranog/api-bootstrapper-cli.git
 cd api-bootstrapper-cli
 poetry install
-
-# Setup git hooks and commit template
-bash scripts/setup-dev.sh
 ```
 
 ### Running tests
@@ -227,71 +224,22 @@ poetry run pytest -m e2e
 # Linting & formatting (auto-fix)
 poetry run ruff check . --fix
 poetry run ruff format .
-
-# Pre-commit checks
-poetry run pre-commit run --all-files
 ```
-
-### Making commits
-
-This project uses [Conventional Commits](https://www.conventionalcommits.org/). Use the helper script for interactive commits:
-
-```bash
-# Stage your changes
-git add .
-
-# Interactive commit (recommended)
-bash scripts/commit.sh
-# or
-poetry run cz commit
-
-# Manual commit (will be validated by hook)
-git commit -m "feat(cli): add new command"
-```
-
-**Commit types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
-
-### Version bump & changelog
-
-Automatically generate changelog and bump version:
-
-```bash
-# Auto-detect bump from commits (feat → minor, fix → patch)
-bash scripts/bump.sh
-
-# Or specify increment
-bash scripts/bump.sh patch  # 0.1.0 → 0.1.1
-bash scripts/bump.sh minor  # 0.1.0 → 0.2.0
-bash scripts/bump.sh major  # 0.1.0 → 1.0.0
-
-# Using commitizen directly
-poetry run cz bump --changelog
-```
-
-This automatically:
-- Analyzes commits since last tag
-- Updates version in `pyproject.toml` and `__init__.py`
-- Generates/updates `CHANGELOG.md`
-- Creates git tag
-- Commits all changes
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
-
-**Quick start:**
+Contributions are welcome! To contribute:
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feat/amazing-feature`)
-3. Install dev environment (`bash scripts/setup-dev.sh`)
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Install dependencies (`poetry install`)
 4. Make your changes with tests
-5. Commit using conventional commits (`bash scripts/commit.sh`)
-6. Push to your fork (`git push origin feat/amazing-feature`)
-7. Open a Pull Request
-
-All commits must follow the [Conventional Commits](https://www.conventionalcommits.org/) specification and pass pre-commit hooks.
+5. Run tests and formatting (`poetry run pytest`, `poetry run ruff format .`)
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to your fork (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
 
 ---
 
