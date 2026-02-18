@@ -15,13 +15,11 @@ def test_should_show_main_help():
     assert "CLI to bootstrap and manage Python API projects" in result.stdout
 
 
-def test_should_show_bootstrap_env_help():
+def test_should_show_bootstrap_env_help(expected_bootstrap_help):
     result = runner.invoke(app, ["bootstrap-env", "--help"])
 
     assert result.exit_code == 0
-    assert "Target project folder (default: current)." in result.stdout
-    assert "--path" in result.stdout
-    assert "--python" in result.stdout
+    assert result.stdout == expected_bootstrap_help
 
 
 def test_should_require_command():

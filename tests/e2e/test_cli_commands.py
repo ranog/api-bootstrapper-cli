@@ -228,10 +228,8 @@ def test_should_list_all_commands():
 
 
 @pytest.mark.e2e
-def test_should_show_bootstrap_env_options():
+def test_should_show_bootstrap_env_options(expected_bootstrap_help):
     result = runner.invoke(app, ["bootstrap-env", "--help"])
 
     assert result.exit_code == 0
-    assert "--path" in result.stdout
-    assert "--python" in result.stdout
-    assert "--install" in result.stdout
+    assert result.stdout == expected_bootstrap_help

@@ -7,6 +7,34 @@ import pytest
 
 
 @pytest.fixture
+def expected_bootstrap_help() -> str:
+    return (
+        "                                                                                \n"
+        " Usage: root bootstrap-env [OPTIONS]                                            \n"
+        "                                                                                \n"
+        " Configure complete Python environment for the project.                         \n"
+        "                                                                                \n"
+        " Responsibilities of this command (presentation):                               \n"
+        " - Process CLI arguments                                                        \n"
+        " - Create and inject dependencies                                               \n"
+        " - Delegate logic to service layer                                              \n"
+        " - Display final result to user                                                 \n"
+        "                                                                                \n"
+        " Business logic is in EnvironmentBootstrapService.                              \n"
+        "                                                                                \n"
+        "╭─ Options ────────────────────────────────────────────────────────────────────╮\n"
+        "│ --path                       PATH  Target project folder (default: current). │\n"
+        "│                                    [default: .]                              │\n"
+        "│ --python                     TEXT  Python version to use via pyenv.          │\n"
+        "│                                    [default: 3.12.12]                        │\n"
+        "│ --install    --no-install          Run 'poetry install'. [default: install]  │\n"
+        "│ --help                             Show this message and exit.               │\n"
+        "╰──────────────────────────────────────────────────────────────────────────────╯\n"
+        "\n"
+    )
+
+
+@pytest.fixture
 def temp_project_dir(tmp_path: Path) -> Generator[Path, None, None]:
     project_dir = tmp_path / "test_project"
     project_dir.mkdir()
