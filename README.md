@@ -25,7 +25,41 @@ Automates the setup of **pyenv**, **Poetry**, and **VSCode** configuration in a 
 
 ## 📦 Installation
 
-### From PyPI (recommended)
+### With pipx (recommended)
+
+First, install pipx if you don't have it:
+
+```bash
+# macOS
+brew install pipx
+pipx ensurepath
+
+# Linux (Debian/Ubuntu)
+sudo apt install pipx
+pipx ensurepath
+
+# Or using pip
+python3 -m pip install --user pipx
+python3 -m pipx ensurepath
+```
+
+Then install the CLI:
+
+```bash
+pipx install git+https://github.com/ranog/api-bootstrapper-cli.git
+```
+
+**After installation, reload your shell:**
+
+```bash
+source ~/.bashrc  # or ~/.zshrc if using zsh
+```
+
+**Why pipx?** Installs the CLI in an isolated environment, making it available globally regardless of your current Python version.
+
+> **Note:** If you previously installed via `pip`, uninstall it first: `pip uninstall api-bootstrapper-cli`
+
+### From PyPI
 
 ```bash
 pip install api-bootstrapper-cli
@@ -39,10 +73,22 @@ cd api-bootstrapper-cli
 poetry install
 ```
 
-### For your team (install from Git)
+### Enable shell completion (optional)
+
+Enable tab completion for commands and options:
 
 ```bash
-pip install git+https://github.com/ranog/api-bootstrapper-cli.git
+# Install completion for your shell
+api-bootstrapper --install-completion
+
+# Restart your shell or run:
+source ~/.bashrc  # or ~/.zshrc
+```
+
+Now you can use tab completion:
+```bash
+api-bootstrapper <TAB>           # Shows: bootstrap-env, add-alembic
+api-bootstrapper bootstrap-env --<TAB>  # Shows: --path, --python, --install
 ```
 
 ---
@@ -70,14 +116,14 @@ poetry --version  # Poetry (version 2.3.2)
 
 ### Prerequisites
 
-The target directory can be:
-- **Empty** - Will create a minimal `pyproject.toml` and setup full environment
-- **With existing `pyproject.toml`** - Will use it to setup the environment
-
-**System Requirements:**
-- macOS or Linux
+**For using the CLI:**
+- [pipx](https://pipx.pypa.io/) (recommended) or pip
+- macOS or Linux  
 - [pyenv](https://github.com/pyenv/pyenv) installed
-- Git (for installation from source)
+
+**Target project can be:**
+- **Empty directory** - Will create a minimal `pyproject.toml` and setup full environment
+- **Existing project** - With `pyproject.toml` already present
 
 ### bootstrap-env
 
