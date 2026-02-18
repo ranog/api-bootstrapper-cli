@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Generator
 
 import pytest
+
+
+def strip_ansi_codes(text: str) -> str:
+    ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
+    return ansi_escape.sub("", text)
 
 
 @pytest.fixture

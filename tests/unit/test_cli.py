@@ -2,9 +2,10 @@ import typer
 from typer.testing import CliRunner
 
 from api_bootstrapper_cli.cli import app, main
+from tests.conftest import strip_ansi_codes
 
 
-runner = CliRunner(env={"NO_COLOR": "1"})
+runner = CliRunner()
 
 
 def test_should_show_main_help():
@@ -16,11 +17,10 @@ def test_should_show_main_help():
 
 
 def test_should_show_bootstrap_env_help(expected_bootstrap_help):
-    result = runner.invoke(app, ["bootstrap-env", "--help"])
+    result = runner.invoke(app=app, args=["bootstrap-env", "--help"])
 
     assert result.exit_code == 0
-    print(result.stdout)
-    assert result.stdout == expected_bootstrap_help
+    assert strip_ansi_codes(result.stdout) == expected_bootstrap_help
 
 
 def test_should_require_command():

@@ -7,9 +7,10 @@ from typer.testing import CliRunner
 
 from api_bootstrapper_cli.cli import app
 from api_bootstrapper_cli.core.shell import CommandResult, ShellError
+from tests.conftest import strip_ansi_codes
 
 
-runner = CliRunner(env={"NO_COLOR": "1"})
+runner = CliRunner()
 
 
 @pytest.mark.e2e
@@ -232,5 +233,4 @@ def test_should_show_bootstrap_env_options(expected_bootstrap_help):
     result = runner.invoke(app, ["bootstrap-env", "--help"])
 
     assert result.exit_code == 0
-    print(result.stdout)
-    assert result.stdout == expected_bootstrap_help
+    assert strip_ansi_codes(result.stdout) == expected_bootstrap_help
