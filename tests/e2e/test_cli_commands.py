@@ -9,7 +9,7 @@ from api_bootstrapper_cli.cli import app
 from api_bootstrapper_cli.core.shell import CommandResult, ShellError
 
 
-runner = CliRunner()
+runner = CliRunner(env={"NO_COLOR": "1"})
 
 
 @pytest.mark.e2e

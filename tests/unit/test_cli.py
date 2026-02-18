@@ -4,7 +4,7 @@ from typer.testing import CliRunner
 from api_bootstrapper_cli.cli import app, main
 
 
-runner = CliRunner()
+runner = CliRunner(env={"NO_COLOR": "1"})
 
 
 def test_should_show_main_help():
