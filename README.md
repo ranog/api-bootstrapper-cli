@@ -110,6 +110,8 @@ python --version  # Python 3.12.12
 poetry --version  # Poetry (version 2.3.2)
 ```
 
+> **Note:** The CLI automatically detects paths with spaces or accents (e.g., `/Área de Trabalho/project`) and shows `source $(poetry env info --path)/bin/activate` which handles special characters reliably.
+
 ---
 
 ## 📖 Usage

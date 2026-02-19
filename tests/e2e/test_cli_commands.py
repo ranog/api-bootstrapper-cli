@@ -234,3 +234,119 @@ def test_should_show_bootstrap_env_options(expected_bootstrap_help):
 
     assert result.exit_code == 0
     assert strip_ansi_codes(result.stdout) == expected_bootstrap_help
+
+
+@pytest.mark.e2e
+def test_should_show_poetry_command_for_normal_path(mocker, tmp_path: Path):
+    project_path = tmp_path / "test_project"
+    project_path.mkdir()
+    (project_path / ".venv").mkdir()
+    (project_path / "pyproject.toml").write_text(
+        '[tool.poetry]\nname = "test"\nversion = "1.0.0"'
+    )
+
+    mock_pyenv_exec = mocker.patch("api_bootstrapper_cli.core.pyenv_manager.exec_cmd")
+    mock_pyenv_exec.side_effect = [
+        CommandResult(stdout="pyenv 2.3.0", stderr="", returncode=0),
+        CommandResult(stdout="3.12.3\n", stderr="", returncode=0),
+        CommandResult(stdout="", stderr="", returncode=0),
+        CommandResult(
+            stdout="/home/user/.pyenv/versions/3.12.3\n", stderr="", returncode=0
+        ),
+        CommandResult(
+            stdout="/home/user/.pyenv/versions/3.12.3\n", stderr="", returncode=0
+        ),
+        CommandResult(stdout="", stderr="", returncode=0),
+    ]
+
+    mocker.patch(
+        "api_bootstrapper_cli.core.poetry_manager.PoetryManager._get_poetry_cmd",
+        return_value="poetry",
+    )
+
+    mock_poetry_exec = mocker.patch("api_bootstrapper_cli.core.poetry_manager.exec_cmd")
+    mock_poetry_exec.side_effect = [
+        CommandResult(stdout="Poetry 1.7.0", stderr="", returncode=0),
+        CommandResult(stdout="", stderr="", returncode=0),
+        CommandResult(stdout="", stderr="", returncode=0),
+        CommandResult(stdout="", stderr="", returncode=0),
+        CommandResult(stdout=f"{project_path}/.venv\n", stderr="", returncode=0),
+        CommandResult(stdout=f"{project_path}/.venv\n", stderr="", returncode=0),
+    ]
+
+    result = runner.invoke(
+        app,
+        ["bootstrap-env", "--path", str(project_path), "--python", "3.12.3"],
+    )
+
+    assert result.exit_code == 0
+
+    output = strip_ansi_codes(result.stdout).replace("\n", " ")
+
+    assert "source" in output
+    assert ".venv/bin/activate" in output
+    assert "source $(poetry env info --path)/bin/activate" in output
+    assert "# Or use:" in output
+
+
+@pytest.mark.e2e
+def test_should_prioritize_poetry_command_for_special_chars_path(
+    mocker, tmp_path: Path
+):
+    project_path = tmp_path / "Área de trabalho" / "my project"
+    project_path.mkdir(parents=True)
+    (project_path / ".venv").mkdir()
+    (project_path / "pyproject.toml").write_text(
+        '[tool.poetry]\nname = "test"\nversion = "1.0.0"'
+    )
+
+    mock_pyenv_exec = mocker.patch("api_bootstrapper_cli.core.pyenv_manager.exec_cmd")
+    mock_pyenv_exec.side_effect = [
+        CommandResult(stdout="pyenv 2.3.0", stderr="", returncode=0),
+        CommandResult(stdout="3.12.3\n", stderr="", returncode=0),
+        CommandResult(stdout="", stderr="", returncode=0),
+        CommandResult(
+            stdout="/home/user/.pyenv/versions/3.12.3\n", stderr="", returncode=0
+        ),
+        CommandResult(
+            stdout="/home/user/.pyenv/versions/3.12.3\n", stderr="", returncode=0
+        ),
+        CommandResult(stdout="", stderr="", returncode=0),
+    ]
+
+    mocker.patch(
+        "api_bootstrapper_cli.core.poetry_manager.PoetryManager._get_poetry_cmd",
+        return_value="poetry",
+    )
+
+    mock_poetry_exec = mocker.patch("api_bootstrapper_cli.core.poetry_manager.exec_cmd")
+    mock_poetry_exec.side_effect = [
+        CommandResult(stdout="Poetry 1.7.0", stderr="", returncode=0),
+        CommandResult(stdout="", stderr="", returncode=0),
+        CommandResult(stdout="", stderr="", returncode=0),
+        CommandResult(stdout="", stderr="", returncode=0),
+        CommandResult(stdout=f"{project_path}/.venv\n", stderr="", returncode=0),
+        CommandResult(stdout=f"{project_path}/.venv\n", stderr="", returncode=0),
+    ]
+
+    result = runner.invoke(
+        app,
+        ["bootstrap-env", "--path", str(project_path), "--python", "3.12.3"],
+    )
+
+    assert result.exit_code == 0
+
+    output_lines = result.stdout.split("\n")
+    activate_section_start = None
+
+    for i, line in enumerate(output_lines):
+        if "To activate" in line:
+            activate_section_start = i
+            break
+
+    assert activate_section_start is not None, "Activation message not found"
+    assert (
+        "source $(poetry env info --path)/bin/activate"
+        in output_lines[activate_section_start + 1]
+    )
+    assert "if path has spaces/accents" in result.stdout

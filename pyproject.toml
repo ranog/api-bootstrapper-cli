@@ -135,6 +135,7 @@ addopts = [
     "--strict-markers",
     "--tb=short",
     "--disable-warnings",
+    "--cov-fail-under=90",
 ]
 markers = [
     "unit: Unit tests (fast, isolated)",

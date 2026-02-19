@@ -82,9 +82,23 @@ def _display_success(result: EnvironmentSetupResult) -> None:
     console.print("[bold green]✓[/bold green] [green]Environment ready![/green]")
 
     if result.has_poetry_project and result.venv_path:
-        console.print(
-            "[dim]To activate the virtual environment, run:[/dim]\n"
-            f"  [cyan]source {result.venv_path}/bin/activate[/cyan]"
+        venv_path_str = str(result.venv_path)
+        has_special_chars = " " in venv_path_str or any(
+            ord(c) > 127 for c in venv_path_str
         )
+
+        console.print("[dim]To activate the virtual environment, run:[/dim]")
+
+        if has_special_chars:
+            console.print(
+                f"  [cyan]source $(poetry env info --path)/bin/activate[/cyan]\n"
+                f"  [dim]# Alternative (if path has spaces/accents):[/dim]\n"
+                f"  [dim]source '{venv_path_str}/bin/activate'[/dim]"
+            )
+        else:
+            console.print(
+                f"  [cyan]source {venv_path_str}/bin/activate[/cyan]\n"
+                f"  [dim]# Or use: source $(poetry env info --path)/bin/activate[/dim]"
+            )
 
     console.print()
