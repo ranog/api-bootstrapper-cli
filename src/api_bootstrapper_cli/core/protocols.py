@@ -23,6 +23,10 @@ class PythonEnvironmentManager(Protocol):
         """Return the path to the Python executable for the version."""
         ...
 
+    def install_pip_packages(self, version: str, packages: list[str]) -> None:
+        """Install pip packages for a specific Python version."""
+        ...
+
 
 class DependencyManager(Protocol):
     """Interface for dependency managers (poetry, pipenv, etc)."""

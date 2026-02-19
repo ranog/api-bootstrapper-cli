@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -14,14 +15,17 @@ class MockLogger:
     def __init__(self):
         self.messages = []
 
-    def info(self, msg: str):
+    def info(self, msg: str) -> None:
         self.messages.append(("info", msg))
 
-    def success(self, msg: str):
+    def success(self, msg: str) -> None:
         self.messages.append(("success", msg))
 
-    def error(self, msg: str):
+    def error(self, msg: str) -> None:
         self.messages.append(("error", msg))
+
+    def warning(self, msg: str) -> None:
+        self.messages.append(("warning", msg))
 
 
 class MockPythonEnvManager:
@@ -30,7 +34,7 @@ class MockPythonEnvManager:
         self.python_path = Path("/home/user/.pyenv/versions/3.12.3/bin/python")
 
     def is_installed(self) -> bool:
-        return self.installed
+        return cast(bool, self.installed)
 
     def ensure_python(self, version: str):
         pass
@@ -39,20 +43,23 @@ class MockPythonEnvManager:
         pass
 
     def get_python_path(self, version: str) -> Path:
-        return self.python_path
+        return cast(Path, self.python_path)
 
     def install_pip_packages(self, version: str, packages: list[str]):
         pass
 
 
 class MockDependencyManager:
-    def configure_venv(self, path: Path):
+    def is_installed(self) -> bool:
+        return True
+
+    def configure_venv(self, path: Path) -> None:
         pass
 
-    def use_python(self, path: Path, python_path: Path):
+    def use_python(self, path: Path, python_path: Path) -> None:
         pass
 
-    def install_dependencies(self, path: Path):
+    def install_dependencies(self, path: Path) -> None:
         pass
 
     def get_venv_path(self, path: Path) -> Path:

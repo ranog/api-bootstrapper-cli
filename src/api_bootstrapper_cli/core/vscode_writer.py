@@ -48,7 +48,11 @@ class VSCodeWriter:
             return {}
 
         try:
-            return json.loads(read_text(settings_path))
+            return (
+                result
+                if isinstance(result := json.loads(read_text(settings_path)), dict)
+                else {}
+            )
         except Exception:
             return {}
 

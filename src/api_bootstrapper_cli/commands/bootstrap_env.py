@@ -5,7 +5,10 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
-from api_bootstrapper_cli.core.environment_service import EnvironmentBootstrapService
+from api_bootstrapper_cli.core.environment_service import (
+    EnvironmentBootstrapService,
+    EnvironmentSetupResult,
+)
 from api_bootstrapper_cli.core.logger import RichLogger
 from api_bootstrapper_cli.core.poetry_manager import PoetryManager
 from api_bootstrapper_cli.core.pyenv_manager import PyenvManager
@@ -70,7 +73,7 @@ def _create_bootstrap_service() -> EnvironmentBootstrapService:
     )
 
 
-def _display_success(result) -> None:
+def _display_success(result: EnvironmentSetupResult) -> None:
     """Display success message to the user.
 
     Presentation responsibility separated from logic.

@@ -51,9 +51,9 @@ class PoetryManager:
         for path_dir in clean_path.split(os.pathsep):
             if not path_dir:
                 continue
-            poetry_path = Path(path_dir) / "poetry"
-            if poetry_path.exists() and os.access(poetry_path, os.X_OK):
-                return str(poetry_path)
+            posix_path = Path(path_dir) / "poetry"
+            if posix_path.exists() and os.access(posix_path, os.X_OK):
+                return str(posix_path)
 
         return "poetry"
 

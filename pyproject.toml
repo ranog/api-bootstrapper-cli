@@ -35,10 +35,11 @@ rich = "^14.3.2"
 pre-commit = "^4.5.1"
 ruff = "^0.15.1"
 pytest = "^9.0.2"
-commitizen = "^4.13.7"
+commitizen = "^4.13.8"
 pytest-cov = "^7.0.0"
 pytest-mock = "^3.15.1"
 faker = "^40.4.0"
+mypy = "^1.19.1"
 
 [tool.poetry.scripts]
 api-bootstrapper = "api_bootstrapper_cli.cli:main"
@@ -162,3 +163,31 @@ version_files = [
     "pyproject.toml:version"
 ]
 tag_format = "v$version"
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+show_error_codes = true
+exclude = [
+    "^build/",
+    "^dist/",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "tests.*",
+]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = false
