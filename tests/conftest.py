@@ -10,9 +10,14 @@ import pytest
 BOX_BORDER_RE = re.compile(r"^[╭╰│].*[╮╯│]$")
 
 
+def strip_ansi_codes(text: str) -> str:
+    ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
+    return ansi_escape.sub("", text)
+
+
 def normalize_help_lines(text: str) -> list[str]:
-    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
-    # remove purely box lines (borders and lines with │ ... │)
+    clean_text = strip_ansi_codes(text)
+    lines = [ln.strip() for ln in clean_text.splitlines() if ln.strip()]
     return [ln for ln in lines if not BOX_BORDER_RE.match(ln)]
 
 

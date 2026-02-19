@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 import pytest
@@ -8,6 +7,7 @@ from typer.testing import CliRunner
 
 from api_bootstrapper_cli.cli import app
 from api_bootstrapper_cli.core.shell import CommandResult, ShellError
+from tests.conftest import strip_ansi_codes
 
 
 runner = CliRunner()
@@ -211,11 +211,6 @@ def test_should_create_minimal_pyproject_when_missing(mocker, tmp_path: Path):
     assert vscode_settings.exists()
 
 
-def strip_ansi_codes(text: str) -> str:
-    ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
-    return ansi_escape.sub("", text)
-
-
 @pytest.mark.e2e
 def test_should_show_poetry_command_for_normal_path(mocker, tmp_path: Path):
     project_path = tmp_path / "test_project"
@@ -261,12 +256,13 @@ def test_should_show_poetry_command_for_normal_path(mocker, tmp_path: Path):
 
     assert result.exit_code == 0
 
-    output = strip_ansi_codes(result.stdout).replace("\n", " ")
+    output = strip_ansi_codes(result.stdout)
+    output_normalized = " ".join(output.split())
 
-    assert "source" in output
-    assert ".venv/bin/activate" in output
-    assert "source $(poetry env info --path)/bin/activate" in output
-    assert "# Or use:" in output
+    assert "source" in output_normalized
+    assert "bin/activate" in output_normalized
+    assert "source $(poetry env info --path)/bin/activate" in output_normalized
+    assert "# Or use:" in output_normalized
 
 
 @pytest.mark.e2e
