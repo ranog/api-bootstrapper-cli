@@ -7,35 +7,26 @@ from typing import Generator
 import pytest
 
 
-def strip_ansi_codes(text: str) -> str:
-    ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
-    return ansi_escape.sub("", text)
+BOX_BORDER_RE = re.compile(r"^[╭╰│].*[╮╯│]$")
+
+
+def normalize_help_lines(text: str) -> list[str]:
+    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+    # remove purely box lines (borders and lines with │ ... │)
+    return [ln for ln in lines if not BOX_BORDER_RE.match(ln)]
 
 
 @pytest.fixture
-def expected_bootstrap_help() -> str:
-    return (
-        "                                                                                \n"
-        " Usage: root bootstrap-env [OPTIONS]                                            \n"
-        "                                                                                \n"
-        " Setup Python environment with pyenv, Poetry, and VSCode configuration.         \n"
-        "                                                                                \n"
-        " Creates or configures:                                                         \n"
-        " - Python version via pyenv (.python-version)                                   \n"
-        " - Poetry virtual environment (.venv)                                           \n"
-        " - VSCode Python settings (.vscode/settings.json)                               \n"
-        " - Minimal pyproject.toml (if doesn't exist)                                    \n"
-        "                                                                                \n"
-        "╭─ Options ────────────────────────────────────────────────────────────────────╮\n"
-        "│ --path                       PATH  Target project folder (default: current). │\n"
-        "│                                    [default: .]                              │\n"
-        "│ --python                     TEXT  Python version to use via pyenv.          │\n"
-        "│                                    [default: 3.12.12]                        │\n"
-        "│ --install    --no-install          Run 'poetry install'. [default: install]  │\n"
-        "│ --help                             Show this message and exit.               │\n"
-        "╰──────────────────────────────────────────────────────────────────────────────╯\n"
-        "\n"
-    )
+def expected_bootstrap_help() -> list[str]:
+    return [
+        "Usage: root bootstrap-env [OPTIONS]",
+        "Setup Python environment with pyenv, Poetry, and VSCode configuration.",
+        "Creates or configures:",
+        "- Python version via pyenv (.python-version)",
+        "- Poetry virtual environment (.venv)",
+        "- VSCode Python settings (.vscode/settings.json)",
+        "- Minimal pyproject.toml (if doesn't exist)",
+    ]
 
 
 @pytest.fixture

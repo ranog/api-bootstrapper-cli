@@ -19,19 +19,19 @@ install:
 	poetry install
 
 test:
-	poetry run pytest
+	poetry run pytest -n auto
 
 test-cov:
-	poetry run pytest --cov=src/api_bootstrapper_cli --cov-report=term-missing --cov-report=html
+	poetry run pytest -n auto --cov=src/api_bootstrapper_cli --cov-report=term-missing --cov-report=html
 
 test-unit:
-	poetry run pytest -m unit
+	poetry run pytest -n auto tests/unit
 
 test-integration:
-	poetry run pytest -m integration
+	poetry run pytest -n auto tests/integration
 
 test-e2e:
-	poetry run pytest -m e2e
+	poetry run pytest -n auto tests/e2e
 
 lint:
 	poetry run ruff check src tests

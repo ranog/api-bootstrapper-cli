@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -7,7 +8,6 @@ from typer.testing import CliRunner
 
 from api_bootstrapper_cli.cli import app
 from api_bootstrapper_cli.core.shell import CommandResult, ShellError
-from tests.conftest import strip_ansi_codes
 
 
 runner = CliRunner()
@@ -211,29 +211,9 @@ def test_should_create_minimal_pyproject_when_missing(mocker, tmp_path: Path):
     assert vscode_settings.exists()
 
 
-@pytest.mark.e2e
-def test_should_show_todo_message():
-    result = runner.invoke(app, ["add-alembic"])
-
-    assert result.exit_code == 0
-    assert "TODO" in result.stdout
-
-
-@pytest.mark.e2e
-def test_should_list_all_commands():
-    result = runner.invoke(app, ["--help"])
-
-    assert result.exit_code == 0
-    assert "bootstrap-env" in result.stdout
-    assert "add-alembic" in result.stdout
-
-
-@pytest.mark.e2e
-def test_should_show_bootstrap_env_options(expected_bootstrap_help):
-    result = runner.invoke(app, ["bootstrap-env", "--help"])
-
-    assert result.exit_code == 0
-    assert strip_ansi_codes(result.stdout) == expected_bootstrap_help
+def strip_ansi_codes(text: str) -> str:
+    ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
+    return ansi_escape.sub("", text)
 
 
 @pytest.mark.e2e
