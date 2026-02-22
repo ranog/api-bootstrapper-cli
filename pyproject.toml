@@ -33,7 +33,7 @@ rich = "^14.3.2"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^4.5.1"
-ruff = "^0.15.1"
+ruff = "^0.15.2"
 pytest = "^9.0.2"
 commitizen = "^4.13.8"
 pytest-cov = "^7.0.0"

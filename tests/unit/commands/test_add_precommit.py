@@ -1,0 +1,199 @@
+from __future__ import annotations
+
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+from typer.testing import CliRunner
+
+from api_bootstrapper_cli.cli import app
+
+
+runner = CliRunner()
+
+
+def test_should_show_add_precommit_help():
+    result = runner.invoke(app, ["add-precommit", "--help"])
+
+    assert result.exit_code == 0
+    assert "Add pre-commit configuration" in result.stdout
+    assert "--path" in result.stdout
+
+
+def test_should_accept_default_path():
+    with patch(
+        "api_bootstrapper_cli.commands.add_precommit.PreCommitManager"
+    ) as mock_manager:
+        mock_instance = MagicMock()
+        mock_instance.create_config.return_value = (
+            Path(".pre-commit-config.yaml"),
+            {"ruff": "0.15.1", "commitizen": "4.13.8"},
+        )
+        mock_manager.return_value = mock_instance
+
+        runner.invoke(app, ["add-precommit"])
+
+        mock_instance.create_config.assert_called_once()
+
+
+def test_should_accept_custom_path():
+    with patch(
+        "api_bootstrapper_cli.commands.add_precommit.PreCommitManager"
+    ) as mock_manager:
+        mock_instance = MagicMock()
+        test_path = Path("/tmp/test-project")
+        mock_instance.create_config.return_value = (
+            test_path / ".pre-commit-config.yaml",
+            {"ruff": "0.15.1"},
+        )
+        mock_manager.return_value = mock_instance
+
+        runner.invoke(app, ["add-precommit", "--path", str(test_path)])
+
+        assert mock_instance.create_config.called
+
+
+def test_should_display_success_message(tmp_path: Path):
+    with patch(
+        "api_bootstrapper_cli.commands.add_precommit.PreCommitManager"
+    ) as mock_manager:
+        mock_instance = MagicMock()
+        config_path = tmp_path / ".pre-commit-config.yaml"
+        config_path.touch()
+        mock_instance.create_config.return_value = (
+            config_path,
+            {"ruff": "0.15.1", "commitizen": "4.13.8"},
+        )
+        mock_manager.return_value = mock_instance
+
+        result = runner.invoke(app, ["add-precommit", "--path", str(tmp_path)])
+
+        assert result.exit_code == 0
+        assert "Pre-commit configured!" in result.stdout
+        assert ".pre-commit-config.yaml" in result.stdout
+
+
+def test_should_display_installed_versions(tmp_path: Path):
+    with patch(
+        "api_bootstrapper_cli.commands.add_precommit.PreCommitManager"
+    ) as mock_manager:
+        mock_instance = MagicMock()
+        config_path = tmp_path / ".pre-commit-config.yaml"
+        config_path.touch()
+        mock_instance.create_config.return_value = (
+            config_path,
+            {"ruff": "0.16.0", "commitizen": "4.14.0"},
+        )
+        mock_manager.return_value = mock_instance
+
+        result = runner.invoke(app, ["add-precommit", "--path", str(tmp_path)])
+
+        assert result.exit_code == 0
+        assert "Installed versions:" in result.stdout
+        assert "ruff" in result.stdout
+        assert "0.16.0" in result.stdout
+        assert "commitizen" in result.stdout
+        assert "4.14.0" in result.stdout
+
+
+def test_should_handle_empty_versions_dict(tmp_path: Path):
+    with patch(
+        "api_bootstrapper_cli.commands.add_precommit.PreCommitManager"
+    ) as mock_manager:
+        mock_instance = MagicMock()
+        config_path = tmp_path / ".pre-commit-config.yaml"
+        config_path.touch()
+        mock_instance.create_config.return_value = (config_path, {})
+        mock_manager.return_value = mock_instance
+
+        result = runner.invoke(app, ["add-precommit", "--path", str(tmp_path)])
+
+        assert result.exit_code == 0
+        assert "Pre-commit configured!" in result.stdout
+
+
+def test_show_hooks_installed_message_with_git(tmp_path: Path):
+    git_hooks = tmp_path / ".git" / "hooks"
+    git_hooks.mkdir(parents=True)
+
+    with patch(
+        "api_bootstrapper_cli.commands.add_precommit.PreCommitManager"
+    ) as mock_manager:
+        mock_instance = MagicMock()
+        config_path = tmp_path / ".pre-commit-config.yaml"
+        config_path.touch()
+        mock_instance.create_config.return_value = (
+            config_path,
+            {"ruff": "0.15.1"},
+        )
+        mock_manager.return_value = mock_instance
+
+        result = runner.invoke(app, ["add-precommit", "--path", str(tmp_path)])
+
+        assert result.exit_code == 0
+        assert "Hooks installed!" in result.stdout
+        assert "will now run automatically" in result.stdout
+
+
+def test_show_warning_without_git(tmp_path: Path):
+    with patch(
+        "api_bootstrapper_cli.commands.add_precommit.PreCommitManager"
+    ) as mock_manager:
+        mock_instance = MagicMock()
+        config_path = tmp_path / ".pre-commit-config.yaml"
+        config_path.touch()
+        mock_instance.create_config.return_value = (
+            config_path,
+            {"ruff": "0.15.1"},
+        )
+        mock_manager.return_value = mock_instance
+
+        result = runner.invoke(app, ["add-precommit", "--path", str(tmp_path)])
+
+        assert result.exit_code == 0
+        assert "Not a git repository" in result.stdout
+        assert "poetry run pre-commit install" in result.stdout
+
+
+def test_should_handle_value_error(tmp_path: Path):
+    with patch(
+        "api_bootstrapper_cli.commands.add_precommit.PreCommitManager"
+    ) as mock_manager:
+        mock_instance = MagicMock()
+        mock_instance.create_config.side_effect = ValueError("Project root invalid")
+        mock_manager.return_value = mock_instance
+
+        result = runner.invoke(app, ["add-precommit", "--path", str(tmp_path)])
+
+        assert result.exit_code == 1
+        assert "Error:" in result.stdout
+        assert "Project root invalid" in result.stdout
+
+
+def test_should_handle_unexpected_error(tmp_path: Path):
+    with patch(
+        "api_bootstrapper_cli.commands.add_precommit.PreCommitManager"
+    ) as mock_manager:
+        mock_instance = MagicMock()
+        mock_instance.create_config.side_effect = RuntimeError("Unexpected error")
+        mock_manager.return_value = mock_instance
+
+        result = runner.invoke(app, ["add-precommit", "--path", str(tmp_path)])
+
+        assert result.exit_code == 1
+        assert "Unexpected error:" in result.stdout
+        assert "Unexpected error" in result.stdout
+
+
+def test_should_show_command_in_help():
+    result = runner.invoke(app, ["--help"])
+
+    assert result.exit_code == 0
+    assert "add-precommit" in result.stdout
+
+
+def test_command_description_in_help():
+    result = runner.invoke(app, ["add-precommit", "--help"])
+
+    assert result.exit_code == 0
+    assert "Ruff" in result.stdout
+    assert "Commitizen" in result.stdout

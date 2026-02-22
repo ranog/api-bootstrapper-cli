@@ -16,6 +16,7 @@ Automates the setup of **pyenv**, **Poetry**, and **VSCode** configuration in a 
 - 🐍 **Python Version Management** - Automatic installation and configuration via pyenv
 - 📦 **Dependency Management** - Poetry setup with in-project virtualenv
 - 🔧 **VSCode Integration** - Auto-generated settings for Python interpreter and testing
+- 🪝 **Pre-commit Hooks** - Automated setup with Ruff and Commitizen
 - 🚀 **Smart Detection** - Skips setup if environment already exists
 - 🎯 **Zero Configuration** - Creates minimal `pyproject.toml` if missing
 - 🔒 **Environment Isolation** - Clean environment to prevent version conflicts
@@ -73,6 +74,28 @@ cd api-bootstrapper-cli
 poetry install
 ```
 
+### Updating
+
+To update to the latest version:
+
+**If installed via pipx from git:**
+
+```bash
+pipx install git+https://github.com/ranog/api-bootstrapper-cli.git --force
+```
+
+**If installed via pipx from PyPI (when available):**
+
+```bash
+pipx upgrade api-bootstrapper-cli
+```
+
+**If installed via pip:**
+
+```bash
+pip install --upgrade api-bootstrapper-cli
+```
+
 ### Enable shell completion (optional)
 
 Enable tab completion for commands and options:
@@ -87,7 +110,7 @@ source ~/.bashrc  # or ~/.zshrc
 
 Now you can use tab completion:
 ```bash
-api-bootstrapper <TAB>           # Shows: bootstrap-env, add-alembic
+api-bootstrapper <TAB>           # Shows: bootstrap-env, add-alembic, add-precommit
 api-bootstrapper bootstrap-env --<TAB>  # Shows: --path, --python, --install
 ```
 
@@ -101,6 +124,9 @@ Bootstrap a new Python project in seconds:
 # Create and setup a new project
 api-bootstrapper bootstrap-env --python 3.12.12 --path ./my-project
 
+# Add pre-commit hooks with Ruff and Commitizen
+api-bootstrapper add-precommit --path ./my-project
+
 # Navigate to project and activate environment
 cd my-project
 source .venv/bin/activate
@@ -108,6 +134,7 @@ source .venv/bin/activate
 # Start coding!
 python --version  # Python 3.12.12
 poetry --version  # Poetry (version 2.3.2)
+pre-commit --version  # pre-commit x.x.x
 ```
 
 > **Note:** The CLI automatically detects paths with spaces or accents (e.g., `/Área de Trabalho/project`) and shows `source $(poetry env info --path)/bin/activate` which handles special characters reliably.
@@ -171,6 +198,49 @@ api-bootstrapper bootstrap-env --python 3.12.12
 # Output: environment already configured ✓
 ```
 
+### add-precommit
+
+Configures pre-commit hooks with Ruff (linter/formatter) and Commitizen (conventional commits).
+
+**Basic usage:**
+
+```bash
+# In current directory
+api-bootstrapper add-precommit
+
+# In a specific directory
+api-bootstrapper add-precommit --path ./my-project
+```
+
+**What it does:**
+
+1. ✅ Creates `.pre-commit-config.yaml` with Ruff and Commitizen hooks
+2. ✅ Adds `ruff` and `commitizen` to dev dependencies via Poetry
+3. ✅ Updates hook versions in config to match installed packages
+4. ✅ Installs pre-commit hooks (pre-commit and commit-msg)
+
+**Generated hooks:**
+- **Ruff** - Runs linting with auto-fix on pre-commit
+- **Ruff Format** - Formats code automatically
+- **Commitizen** - Validates commit messages follow conventional commits
+
+**Example workflow:**
+
+```bash
+# After running add-precommit
+git add .
+git commit -m "fix: correct bug"  # ✓ Valid conventional commit
+
+# Hooks automatically run:
+# 1. Ruff checks and fixes code
+# 2. Ruff formats code
+# 3. Commitizen validates commit message
+```
+
+**Requires:**
+- Git repository initialized (`.git/` directory)
+- Poetry environment configured
+
 ---
 
 ## 📁 Project Structure
@@ -179,6 +249,8 @@ After running `bootstrap-env`, your project will have:
 
 ```
 my-project/
+├── .git/                    # Git repository
+├── .pre-commit-config.yaml  # Pre-commit hooks (if add-precommit used)
 ├── .python-version          # Python version for pyenv
 ├── .venv/                   # Poetry virtualenv
 ├── .vscode/
@@ -230,11 +302,10 @@ Designed for teams that want **consistent environments** and **deterministic set
 ## 🗺️ Roadmap
 
 - ✅ `bootstrap-env` - pyenv + Poetry + VSCode
+- ✅ `add-precommit` - Git hooks with Ruff and Commitizen
 - ⬜ `add-alembic` - Database migrations
 - ⬜ `add-docker-postgres` - Local database
-- ⬜ `add-ruff` - Linting configuration
 - ⬜ `add-mypy` - Type checking
-- ⬜ `add-pre-commit` - Git hooks
 - ⬜ `add-healthcheck` - Basic health endpoints
 - ⬜ Profiles - fastapi-postgres-clean-arch
 
