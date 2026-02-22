@@ -11,6 +11,9 @@ class RichLogger:
 
     _console: Console = field(default_factory=Console)
 
+    def debug(self, message: str) -> None:
+        self._console.print(f"[dim]{message}[/dim]")
+
     def info(self, message: str) -> None:
         self._console.print(f"[cyan]{message}[/cyan]")
 
@@ -26,3 +29,7 @@ class RichLogger:
     def print(self, message: str) -> None:
         """Additional method for messages without formatting."""
         self._console.print(message)
+
+
+# Default logger instance
+logger = RichLogger()

@@ -298,11 +298,11 @@ def test_add_dependencies_calls_poetry_add(mock_exec: MagicMock, tmp_path: Path)
         [
             "poetry",
             "add",
-            "--group",
-            "dev",
             "pre-commit",
             "ruff",
             "commitizen",
+            "--group",
+            "dev",
         ],
         cwd=str(tmp_path),
         check=True,
@@ -314,7 +314,8 @@ def test_add_dependencies_handles_command_failure(mock_exec: MagicMock, tmp_path
     manager = PreCommitManager()
     mock_exec.side_effect = Exception("Command failed")
 
-    manager._add_dependencies(tmp_path)
+    with pytest.raises(Exception, match="Command failed"):
+        manager._add_dependencies(tmp_path)
 
 
 @patch("api_bootstrapper_cli.core.precommit_manager.exec_cmd")
