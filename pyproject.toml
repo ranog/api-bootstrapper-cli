@@ -40,6 +40,7 @@ pytest-cov = "^7.0.0"
 pytest-mock = "^3.15.1"
 pytest-xdist = "^3.6.1"
 mypy = "^1.19.1"
+virtualenv = "^20.38.0"
 
 [tool.poetry.scripts]
 api-bootstrapper = "api_bootstrapper_cli.cli:main"
