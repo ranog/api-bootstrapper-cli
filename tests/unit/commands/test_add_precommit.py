@@ -8,7 +8,7 @@ from typer.testing import CliRunner
 from api_bootstrapper_cli.cli import app
 
 
-runner = CliRunner()
+runner = CliRunner(env={"NO_COLOR": "1"})
 
 
 def test_should_show_add_precommit_help():
