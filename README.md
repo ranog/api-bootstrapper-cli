@@ -110,7 +110,7 @@ source ~/.bashrc  # or ~/.zshrc
 
 Now you can use tab completion:
 ```bash
-api-bootstrapper <TAB>           # Shows: bootstrap-env, add-alembic, add-precommit
+api-bootstrapper <TAB>           # Shows: init, bootstrap-env, add-alembic, add-precommit
 api-bootstrapper bootstrap-env --<TAB>  # Shows: --path, --python, --install
 ```
 
@@ -118,16 +118,15 @@ api-bootstrapper bootstrap-env --<TAB>  # Shows: --path, --python, --install
 
 ## 🚀 Quick Start
 
-Bootstrap a new Python project in seconds:
+### Option 1: All-in-One (Recommended)
+
+Initialize a complete Python project with a single command:
 
 ```bash
-# Create and setup a new project
-api-bootstrapper bootstrap-env --python 3.12.12 --path ./my-project
+# Complete setup: environment + pre-commit hooks
+api-bootstrapper init --python 3.12.12 --path ./my-project
 
-# Add pre-commit hooks with Ruff and Commitizen
-api-bootstrapper add-precommit --path ./my-project
-
-# Navigate to project and activate environment
+# Navigate and activate
 cd my-project
 source .venv/bin/activate
 
@@ -137,11 +136,39 @@ poetry --version  # Poetry (version 2.3.2)
 pre-commit --version  # pre-commit x.x.x
 ```
 
+### Option 2: Step-by-Step
+
+For more control, run commands individually:
+
+```bash
+# Step 1: Setup Python environment
+api-bootstrapper bootstrap-env --python 3.12.12 --path ./my-project
+
+# Step 2: Add pre-commit hooks (optional)
+api-bootstrapper add-precommit --path ./my-project
+
+# Navigate and activate
+cd my-project
+source .venv/bin/activate
+```
+
 > **Note:** The CLI automatically detects paths with spaces or accents (e.g., `/Área de Trabalho/project`) and shows `source $(poetry env info --path)/bin/activate` which handles special characters reliably.
 
 ---
 
 ## 📖 Usage
+
+### Two Ways to Use This CLI
+
+**🎯 Use `init` when:**
+- Starting a new project from scratch
+- You want everything configured in one command
+- Recommended for most users
+
+**🔧 Use individual commands when:**
+- You already have a project and want to add specific features
+- You need more granular control over the setup
+- You want to configure environment and hooks separately
 
 ### Prerequisites
 
@@ -154,9 +181,45 @@ pre-commit --version  # pre-commit x.x.x
 - **Empty directory** - Will create a minimal `pyproject.toml` and setup full environment
 - **Existing project** - With `pyproject.toml` already present
 
+---
+
+## 📋 Commands
+
+### init
+
+Initialize a complete Python project with all features in one command.
+
+This command combines `bootstrap-env` and `add-precommit` into a single workflow, giving you a fully configured development environment.
+
+**Basic usage:**
+
+```bash
+# Initialize new project
+api-bootstrapper init --python 3.12.12 --path ./my-project
+
+# In current directory
+api-bootstrapper init --python 3.13.9
+
+# Skip dependency installation
+api-bootstrapper init --python 3.12.12 --no-install
+```
+
+**What it does:**
+
+1. ✅ Sets up Python environment (pyenv + Poetry + VSCode)
+2. ✅ Installs pre-commit, ruff, and commitizen dependencies
+3. ✅ Configures pre-commit hooks
+4. ✅ Shows clear next steps
+
+**This is the recommended command for new projects!**
+
+---
+
 ### bootstrap-env
 
 Sets up a complete Python development environment with pyenv, Poetry, and VSCode configuration.
+
+> **💡 Tip:** If you want environment + pre-commit in one command, use `init` instead.
 
 **Basic usage:**
 
@@ -202,6 +265,8 @@ api-bootstrapper bootstrap-env --python 3.12.12
 
 Configures pre-commit hooks with Ruff (linter/formatter) and Commitizen (conventional commits).
 
+> **💡 Tip:** If you're starting a new project, use `init` which includes this automatically.
+
 **Basic usage:**
 
 ```bash
@@ -215,7 +280,7 @@ api-bootstrapper add-precommit --path ./my-project
 **What it does:**
 
 1. ✅ Creates `.pre-commit-config.yaml` with Ruff and Commitizen hooks
-2. ✅ Adds `ruff` and `commitizen` to dev dependencies via Poetry
+2. ✅ Adds `pre-commit`, `ruff`, and `commitizen` to dev dependencies via Poetry
 3. ✅ Updates hook versions in config to match installed packages
 4. ✅ Installs pre-commit hooks (pre-commit and commit-msg)
 
@@ -245,7 +310,7 @@ git commit -m "fix: correct bug"  # ✓ Valid conventional commit
 
 ## 📁 Project Structure
 
-After running `bootstrap-env`, your project will have:
+After running `init` or `bootstrap-env`, your project will have:
 
 ```
 my-project/
@@ -301,6 +366,7 @@ Designed for teams that want **consistent environments** and **deterministic set
 
 ## 🗺️ Roadmap
 
+- ✅ `init` - Complete project initialization (environment + pre-commit)
 - ✅ `bootstrap-env` - pyenv + Poetry + VSCode
 - ✅ `add-precommit` - Git hooks with Ruff and Commitizen
 - ⬜ `add-alembic` - Database migrations
