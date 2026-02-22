@@ -6,17 +6,19 @@ from unittest.mock import MagicMock, patch
 from typer.testing import CliRunner
 
 from api_bootstrapper_cli.cli import app
+from tests.conftest import strip_ansi_codes
 
 
-runner = CliRunner(env={"NO_COLOR": "1"})
+runner = CliRunner()
 
 
 def test_should_show_add_precommit_help():
     result = runner.invoke(app, ["add-precommit", "--help"])
+    output = strip_ansi_codes(text=result.stdout)
 
     assert result.exit_code == 0
-    assert "Add pre-commit configuration" in result.stdout
-    assert "--path" in result.stdout
+    assert "Add pre-commit configuration" in output
+    assert "--path" in output
 
 
 def test_should_accept_default_path():
@@ -66,10 +68,11 @@ def test_should_display_success_message(tmp_path: Path):
         mock_manager.return_value = mock_instance
 
         result = runner.invoke(app, ["add-precommit", "--path", str(tmp_path)])
+        output = strip_ansi_codes(text=result.stdout)
 
         assert result.exit_code == 0
-        assert "Pre-commit configured!" in result.stdout
-        assert ".pre-commit-config.yaml" in result.stdout
+        assert "Pre-commit configured!" in output
+        assert ".pre-commit-config.yaml" in output
 
 
 def test_should_display_installed_versions(tmp_path: Path):
@@ -86,13 +89,14 @@ def test_should_display_installed_versions(tmp_path: Path):
         mock_manager.return_value = mock_instance
 
         result = runner.invoke(app, ["add-precommit", "--path", str(tmp_path)])
+        output = strip_ansi_codes(text=result.stdout)
 
         assert result.exit_code == 0
-        assert "Installed versions:" in result.stdout
-        assert "ruff" in result.stdout
-        assert "0.16.0" in result.stdout
-        assert "commitizen" in result.stdout
-        assert "4.14.0" in result.stdout
+        assert "Installed versions:" in output
+        assert "ruff" in output
+        assert "0.16.0" in output
+        assert "commitizen" in output
+        assert "4.14.0" in output
 
 
 def test_should_handle_empty_versions_dict(tmp_path: Path):
@@ -106,9 +110,10 @@ def test_should_handle_empty_versions_dict(tmp_path: Path):
         mock_manager.return_value = mock_instance
 
         result = runner.invoke(app, ["add-precommit", "--path", str(tmp_path)])
+        output = strip_ansi_codes(text=result.stdout)
 
         assert result.exit_code == 0
-        assert "Pre-commit configured!" in result.stdout
+        assert "Pre-commit configured!" in output
 
 
 def test_show_hooks_installed_message_with_git(tmp_path: Path):
@@ -128,10 +133,11 @@ def test_show_hooks_installed_message_with_git(tmp_path: Path):
         mock_manager.return_value = mock_instance
 
         result = runner.invoke(app, ["add-precommit", "--path", str(tmp_path)])
+        output = strip_ansi_codes(text=result.stdout)
 
         assert result.exit_code == 0
-        assert "Hooks installed!" in result.stdout
-        assert "will now run automatically" in result.stdout
+        assert "Hooks installed!" in output
+        assert "will now run automatically" in output
 
 
 def test_show_warning_without_git(tmp_path: Path):
@@ -148,10 +154,11 @@ def test_show_warning_without_git(tmp_path: Path):
         mock_manager.return_value = mock_instance
 
         result = runner.invoke(app, ["add-precommit", "--path", str(tmp_path)])
+        output = strip_ansi_codes(text=result.stdout)
 
         assert result.exit_code == 0
-        assert "Not a git repository" in result.stdout
-        assert "poetry run pre-commit install" in result.stdout
+        assert "Not a git repository" in output
+        assert "poetry run pre-commit install" in output
 
 
 def test_should_handle_value_error(tmp_path: Path):
@@ -163,10 +170,11 @@ def test_should_handle_value_error(tmp_path: Path):
         mock_manager.return_value = mock_instance
 
         result = runner.invoke(app, ["add-precommit", "--path", str(tmp_path)])
+        output = strip_ansi_codes(text=result.stdout)
 
         assert result.exit_code == 1
-        assert "Error:" in result.stdout
-        assert "Project root invalid" in result.stdout
+        assert "Error:" in output
+        assert "Project root invalid" in output
 
 
 def test_should_handle_unexpected_error(tmp_path: Path):
@@ -178,22 +186,25 @@ def test_should_handle_unexpected_error(tmp_path: Path):
         mock_manager.return_value = mock_instance
 
         result = runner.invoke(app, ["add-precommit", "--path", str(tmp_path)])
+        output = strip_ansi_codes(text=result.stdout)
 
         assert result.exit_code == 1
-        assert "Unexpected error:" in result.stdout
-        assert "Unexpected error" in result.stdout
+        assert "Unexpected error:" in output
+        assert "Unexpected error" in output
 
 
 def test_should_show_command_in_help():
     result = runner.invoke(app, ["--help"])
+    output = strip_ansi_codes(text=result.stdout)
 
     assert result.exit_code == 0
-    assert "add-precommit" in result.stdout
+    assert "add-precommit" in output
 
 
 def test_command_description_in_help():
     result = runner.invoke(app, ["add-precommit", "--help"])
+    output = strip_ansi_codes(text=result.stdout)
 
     assert result.exit_code == 0
-    assert "Ruff" in result.stdout
-    assert "Commitizen" in result.stdout
+    assert "Ruff" in output
+    assert "Commitizen" in output
