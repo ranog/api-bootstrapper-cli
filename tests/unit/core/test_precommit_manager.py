@@ -100,6 +100,7 @@ def test_extract_versions_from_pyproject(tmp_path: Path):
 
     pyproject_content = """\
 [tool.poetry.group.dev.dependencies]
+pre-commit = "^4.0.1"
 ruff = "^0.15.1"
 commitizen = "^4.13.8"
 """
@@ -107,8 +108,10 @@ commitizen = "^4.13.8"
 
     versions = manager._extract_versions_from_pyproject(tmp_path)
 
+    assert "pre-commit" in versions
     assert "ruff" in versions
     assert "commitizen" in versions
+    assert versions["pre-commit"] == "4.0.1"
     assert versions["ruff"] == "0.15.1"
     assert versions["commitizen"] == "4.13.8"
 
@@ -119,6 +122,7 @@ def test_extract_versions_without_caret(tmp_path: Path):
 
     pyproject_content = """\
 [tool.poetry.group.dev.dependencies]
+pre-commit = "4.5.0"
 ruff = "0.16.0"
 commitizen = "4.14.0"
 """
@@ -126,6 +130,7 @@ commitizen = "4.14.0"
 
     versions = manager._extract_versions_from_pyproject(tmp_path)
 
+    assert versions["pre-commit"] == "4.5.0"
     assert versions["ruff"] == "0.16.0"
     assert versions["commitizen"] == "4.14.0"
 
@@ -181,7 +186,7 @@ repos:
     manager._update_config_versions(config_path, versions)
 
     content = config_path.read_text()
-    assert "rev: v0.16.0" in content
+    assert 'rev: "v0.16.0"' in content
 
 
 def test_update_config_versions_updates_commitizen_rev(tmp_path: Path):
@@ -201,7 +206,7 @@ repos:
     manager._update_config_versions(config_path, versions)
 
     content = config_path.read_text()
-    assert "rev: v4.14.0" in content
+    assert 'rev: "v4.14.0"' in content
 
 
 def test_update_config_versions_updates_both(tmp_path: Path):
@@ -225,8 +230,8 @@ repos:
     manager._update_config_versions(config_path, versions)
 
     content = config_path.read_text()
-    assert "rev: v0.16.0" in content
-    assert "rev: v4.14.0" in content
+    assert 'rev: "v0.16.0"' in content
+    assert 'rev: "v4.14.0"' in content
 
 
 def test_update_config_versions_skips_if_file_not_exists(tmp_path: Path):
@@ -290,7 +295,15 @@ def test_add_dependencies_calls_poetry_add(mock_exec: MagicMock, tmp_path: Path)
     manager._add_dependencies(tmp_path)
 
     mock_exec.assert_called_once_with(
-        ["poetry", "add", "--group", "dev", "ruff", "commitizen"],
+        [
+            "poetry",
+            "add",
+            "--group",
+            "dev",
+            "pre-commit",
+            "ruff",
+            "commitizen",
+        ],
         cwd=str(tmp_path),
         check=True,
     )

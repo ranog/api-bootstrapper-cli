@@ -46,7 +46,15 @@ repos:
     def _add_dependencies(self, project_root: Path) -> None:
         try:
             exec_cmd(
-                ["poetry", "add", "--group", "dev", "ruff", "commitizen"],
+                [
+                    "poetry",
+                    "add",
+                    "--group",
+                    "dev",
+                    "pre-commit",
+                    "ruff",
+                    "commitizen",
+                ],
                 cwd=str(project_root),
                 check=True,
             )
@@ -60,6 +68,9 @@ repos:
 
         content = read_text(pyproject_path)
         versions = {}
+
+        if match := re.search(r'pre-commit\s*=\s*"[^"]*?([0-9.]+)"', content):
+            versions["pre-commit"] = match.group(1)
 
         if match := re.search(r'ruff\s*=\s*"[^"]*?([0-9.]+)"', content):
             versions["ruff"] = match.group(1)
@@ -79,15 +90,15 @@ repos:
 
         if "ruff" in versions:
             content = re.sub(
-                r'(astral-sh/ruff-pre-commit\s+rev:\s+)["\']?["\']?',
-                rf"\1v{versions['ruff']}",
+                r'(astral-sh/ruff-pre-commit\s+rev:\s+)"[^"]*"',
+                rf'\1"v{versions["ruff"]}"',
                 content,
             )
 
         if "commitizen" in versions:
             content = re.sub(
-                r'(commitizen-tools/commitizen\s+rev:\s+)["\']?["\']?',
-                rf"\1v{versions['commitizen']}",
+                r'(commitizen-tools/commitizen\s+rev:\s+)"[^"]*"',
+                rf'\1"v{versions["commitizen"]}"',
                 content,
             )
 
