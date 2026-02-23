@@ -181,6 +181,42 @@ source .venv/bin/activate
 - **Empty directory** - Will create a minimal `pyproject.toml` and setup full environment
 - **Existing project** - With `pyproject.toml` already present
 
+### Python Version Support
+
+**Created projects default to Python 3.10+**
+
+When bootstrapping a new project without specifying a Python version, the tool creates a `pyproject.toml` with:
+```toml
+[tool.poetry.dependencies]
+python = "^3.10"
+```
+
+**Why Python 3.10 as minimum?**
+- ✅ Still under official security support (EOL: October 2026)
+- ✅ Compatible with all development tools (ruff, pre-commit, mypy, pytest)
+- ✅ Balances compatibility with modern Python features
+- ✅ Enterprises focused on security have already migrated from 3.9
+
+**You can use any Python version you want:**
+```bash
+# Use Python 3.11
+api-bootstrapper init --python 3.11.5
+
+# Use Python 3.12
+api-bootstrapper init --python 3.12.0
+
+# Use Python 3.13
+api-bootstrapper init --python 3.13.2
+```
+
+The tool will automatically set the correct Python constraint in `pyproject.toml` based on the version you specify.
+
+> **Note:** The CLI itself requires Python 3.12+ to run, but can bootstrap projects with Python 3.10+.
+
+---
+- **Empty directory** - Will create a minimal `pyproject.toml` and setup full environment
+- **Existing project** - With `pyproject.toml` already present
+
 ---
 
 ## 📋 Commands
@@ -336,7 +372,7 @@ authors = []
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"  # Matches your --python version
+python = "^3.10"  # Default: 3.10+ (automatically set from --python version)
 
 [build-system]
 requires = ["poetry-core"]
@@ -344,7 +380,8 @@ build-backend = "poetry.core.masonry.api"
 ```
 
 **Important:**
-- Python version constraint automatically matches your specified version
+- Python version constraint automatically matches your specified `--python` version
+- Default is `^3.10` if no version specified
 - Uses `[tool.poetry]` section (standard Poetry format)
 - The CLI uses `poetry install --no-root` for dependencies only
 - Works for both libraries and applications

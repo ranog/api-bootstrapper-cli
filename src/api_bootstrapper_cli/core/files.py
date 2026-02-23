@@ -21,7 +21,7 @@ def write_text(path: Path, content: str, overwrite: bool = False) -> None:
 def create_minimal_pyproject(
     project_root: Path,
     project_name: str | None = None,
-    python_version: str = "3.12",
+    python_version: str = "3.10",
 ) -> Path:
     if project_name is None:
         project_name = project_root.name

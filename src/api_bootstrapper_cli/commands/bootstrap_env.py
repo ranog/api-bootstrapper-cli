@@ -39,11 +39,9 @@ def bootstrap_env(
     """
     project_root = path.resolve()
 
-    # Dependency Injection: create concrete instances
     service = _create_bootstrap_service()
 
     try:
-        # Delegate all business logic to the service layer
         result = service.bootstrap(
             project_root=project_root,
             python_version=python_version,

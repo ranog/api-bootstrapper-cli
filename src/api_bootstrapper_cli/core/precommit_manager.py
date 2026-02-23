@@ -52,19 +52,15 @@ repos:
 
         content = read_text(pyproject_path)
 
-        # Check if [tool.poetry.group.dev.dependencies] section exists
         dev_section = "[tool.poetry.group.dev.dependencies]"
         if dev_section not in content:
-            # Add the section before [build-system] if possible
             if "[build-system]" in content:
                 content = content.replace(
                     "[build-system]", f"{dev_section}\n\n[build-system]"
                 )
             else:
-                # Append at the end
                 content += f"\n{dev_section}\n"
 
-        # Add dependencies if not already present
         dependencies = {
             "pre-commit": "^4.5.1",
             "ruff": "^0.15.2",
@@ -73,7 +69,6 @@ repos:
 
         for dep, version in dependencies.items():
             if f"{dep} =" not in content:
-                # Find the section and add the dependency
                 content = re.sub(
                     r"(\[tool\.poetry\.group\.dev\.dependencies\]\n)",
                     rf'\1{dep} = "{version}"\n',
@@ -115,13 +110,11 @@ repos:
 
         content = read_text(pyproject_path)
 
-        # Verify format
         if "[tool.poetry.group.dev.dependencies]" not in content:
             logger.warning("[tool.poetry.group.dev.dependencies] section not found")
 
         versions = {}
 
-        # Extract versions in Poetry format: package = "^version" or package = {version = "^version"}
         if match := re.search(r'pre-commit\s*=\s*"[^"]*?([0-9.]+)"', content):
             versions["pre-commit"] = match.group(1)
 
