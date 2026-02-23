@@ -83,18 +83,29 @@ repos:
         write_text(pyproject_path, content, overwrite=True)
         logger.success("Dependencies added to pyproject.toml")
 
-        # Run poetry lock to update lock file
         logger.info("Updating poetry.lock...")
         try:
             exec_cmd(
-                ["poetry", "lock", "--no-update"],
+                ["poetry", "lock"],
                 cwd=str(project_root),
                 check=True,
             )
             logger.success("poetry.lock updated")
         except Exception as e:
-            logger.warning(f"Failed to update lock file: {e}")
-            logger.info("Run 'poetry lock' manually")
+            logger.error(f"Failed to update lock file: {e}")
+            raise
+
+        logger.info("Installing dependencies...")
+        try:
+            exec_cmd(
+                ["poetry", "install"],
+                cwd=str(project_root),
+                check=True,
+            )
+            logger.success("Dependencies installed")
+        except Exception as e:
+            logger.error(f"Failed to install dependencies: {e}")
+            raise
 
     def _extract_versions_from_pyproject(self, project_root: Path) -> dict[str, str]:
         pyproject_path = project_root / "pyproject.toml"

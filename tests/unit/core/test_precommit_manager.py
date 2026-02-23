@@ -290,7 +290,6 @@ def test_generate_config_should_have_correct_hook_ids():
 
 @patch("api_bootstrapper_cli.core.precommit_manager.exec_cmd")
 def test_should_write_dependencies_to_pyproject(mock_exec: MagicMock, tmp_path: Path):
-    """Test that dependencies are written directly to pyproject.toml."""
     manager = PreCommitManager()
     pyproject_path = tmp_path / "pyproject.toml"
     pyproject_path.write_text(
@@ -311,9 +310,14 @@ requires = ["poetry-core"]
     assert 'ruff = "^0.15.2"' in content
     assert 'commitizen = "^4.13.8"' in content
 
-    # Verify poetry lock was called
-    mock_exec.assert_called_once_with(
-        ["poetry", "lock", "--no-update"],
+    assert mock_exec.call_count == 2
+    mock_exec.assert_any_call(
+        ["poetry", "lock"],
+        cwd=str(tmp_path),
+        check=True,
+    )
+    mock_exec.assert_any_call(
+        ["poetry", "install"],
         cwd=str(tmp_path),
         check=True,
     )
@@ -321,7 +325,6 @@ requires = ["poetry-core"]
 
 @patch("api_bootstrapper_cli.core.precommit_manager.exec_cmd")
 def test_should_handle_missing_pyproject_file(mock_exec: MagicMock, tmp_path: Path):
-    """Test that missing pyproject.toml raises an error."""
     manager = PreCommitManager()
 
     with pytest.raises(FileNotFoundError, match="pyproject.toml not found"):
@@ -376,4 +379,4 @@ commitizen = "^4.14.0"
     assert config_path.exists()
     assert "ruff" in versions
     assert "commitizen" in versions
-    assert mock_exec.call_count == 2
+    assert mock_exec.call_count == 3
