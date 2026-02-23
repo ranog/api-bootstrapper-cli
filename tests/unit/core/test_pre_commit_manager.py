@@ -5,40 +5,41 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from api_bootstrapper_cli.core.precommit_manager import PreCommitManager
+from api_bootstrapper_cli.core.pre_commit_manager import PreCommitManager
 
 
-@patch("api_bootstrapper_cli.core.precommit_manager.exec_cmd")
-def test_should_create_precommit_config_file(mock_exec: MagicMock, tmp_path: Path):
+@patch("api_bootstrapper_cli.core.pre_commit_manager.exec_cmd")
+def test_should_create_pre_commit_config_file(mock_exec: MagicMock, tmp_path: Path):
     manager = PreCommitManager()
     (tmp_path / "pyproject.toml").write_text('[tool.poetry]\nname = "test"')
 
-    config_path, versions = manager.create_config(tmp_path)
+    config_path, versions, already_existed = manager.create_config(tmp_path)
 
     assert config_path.exists()
     assert config_path.name == ".pre-commit-config.yaml"
     assert config_path.parent == tmp_path
     assert isinstance(versions, dict)
+    assert already_existed is False
 
 
-@patch("api_bootstrapper_cli.core.precommit_manager.exec_cmd")
+@patch("api_bootstrapper_cli.core.pre_commit_manager.exec_cmd")
 def test_should_generate_valid_yaml_content(mock_exec: MagicMock, tmp_path: Path):
     manager = PreCommitManager()
     (tmp_path / "pyproject.toml").write_text('[tool.poetry]\nname = "test"')
 
-    config_path, _ = manager.create_config(tmp_path)
+    config_path, _, _ = manager.create_config(tmp_path)
     content = config_path.read_text()
 
     assert "repos:" in content
     assert "repo:" in content
 
 
-@patch("api_bootstrapper_cli.core.precommit_manager.exec_cmd")
+@patch("api_bootstrapper_cli.core.pre_commit_manager.exec_cmd")
 def test_should_include_ruff_hooks(mock_exec: MagicMock, tmp_path: Path):
     manager = PreCommitManager()
     (tmp_path / "pyproject.toml").write_text('[tool.poetry]\nname = "test"')
 
-    config_path, _ = manager.create_config(tmp_path)
+    config_path, _, _ = manager.create_config(tmp_path)
     content = config_path.read_text()
 
     assert "astral-sh/ruff-pre-commit" in content
@@ -48,12 +49,12 @@ def test_should_include_ruff_hooks(mock_exec: MagicMock, tmp_path: Path):
     assert "--exit-non-zero-on-fix" in content
 
 
-@patch("api_bootstrapper_cli.core.precommit_manager.exec_cmd")
+@patch("api_bootstrapper_cli.core.pre_commit_manager.exec_cmd")
 def test_should_include_commitizen_hooks(mock_exec: MagicMock, tmp_path: Path):
     manager = PreCommitManager()
     (tmp_path / "pyproject.toml").write_text('[tool.poetry]\nname = "test"')
 
-    config_path, _ = manager.create_config(tmp_path)
+    config_path, _, _ = manager.create_config(tmp_path)
     content = config_path.read_text()
 
     assert "commitizen-tools/commitizen" in content
@@ -61,19 +62,22 @@ def test_should_include_commitizen_hooks(mock_exec: MagicMock, tmp_path: Path):
     assert "stages: [commit-msg]" in content
 
 
-@patch("api_bootstrapper_cli.core.precommit_manager.exec_cmd")
-def test_should_overwrite_existing_config(mock_exec: MagicMock, tmp_path: Path):
+@patch("api_bootstrapper_cli.core.pre_commit_manager.exec_cmd")
+def test_should_preserve_existing_config(mock_exec: MagicMock, tmp_path: Path):
     manager = PreCommitManager()
     (tmp_path / "pyproject.toml").write_text('[tool.poetry]\nname = "test"')
     config_path = tmp_path / ".pre-commit-config.yaml"
-    config_path.write_text("# Old configuration\nrepos: []")
+    original_content = "# Custom configuration\nrepos:\n  - repo: https://github.com/custom/hook\n    rev: v1.0.0"
+    config_path.write_text(original_content)
 
-    new_config_path, _ = manager.create_config(tmp_path)
+    new_config_path, _, already_existed = manager.create_config(tmp_path)
     content = new_config_path.read_text()
 
     assert new_config_path == config_path
-    assert "# Old configuration" not in content
-    assert "astral-sh/ruff-pre-commit" in content
+    assert already_existed is True
+    assert "# Custom configuration" in content
+    assert "custom/hook" in content
+    assert "astral-sh/ruff-pre-commit" not in content
 
 
 def test_should_raise_error_if_project_root_not_exists():
@@ -84,12 +88,12 @@ def test_should_raise_error_if_project_root_not_exists():
         manager.create_config(non_existent_path)
 
 
-@patch("api_bootstrapper_cli.core.precommit_manager.exec_cmd")
+@patch("api_bootstrapper_cli.core.pre_commit_manager.exec_cmd")
 def test_should_return_correct_config_path(mock_exec: MagicMock, tmp_path: Path):
     manager = PreCommitManager()
     (tmp_path / "pyproject.toml").write_text('[tool.poetry]\nname = "test"')
 
-    config_path, _ = manager.create_config(tmp_path)
+    config_path, _, _ = manager.create_config(tmp_path)
 
     assert config_path == tmp_path / ".pre-commit-config.yaml"
 
@@ -288,7 +292,7 @@ def test_generate_config_should_have_correct_hook_ids():
     assert "id: commitizen" in content
 
 
-@patch("api_bootstrapper_cli.core.precommit_manager.exec_cmd")
+@patch("api_bootstrapper_cli.core.pre_commit_manager.exec_cmd")
 def test_should_write_dependencies_to_pyproject(mock_exec: MagicMock, tmp_path: Path):
     manager = PreCommitManager()
     pyproject_path = tmp_path / "pyproject.toml"
@@ -323,7 +327,7 @@ requires = ["poetry-core"]
     )
 
 
-@patch("api_bootstrapper_cli.core.precommit_manager.exec_cmd")
+@patch("api_bootstrapper_cli.core.pre_commit_manager.exec_cmd")
 def test_should_handle_missing_pyproject_file(mock_exec: MagicMock, tmp_path: Path):
     manager = PreCommitManager()
 
@@ -331,7 +335,7 @@ def test_should_handle_missing_pyproject_file(mock_exec: MagicMock, tmp_path: Pa
         manager._add_dependencies(tmp_path)
 
 
-@patch("api_bootstrapper_cli.core.precommit_manager.exec_cmd")
+@patch("api_bootstrapper_cli.core.pre_commit_manager.exec_cmd")
 def test_should_call_correct_command_to_install_hooks(
     mock_exec: MagicMock, tmp_path: Path
 ):
@@ -355,7 +359,7 @@ def test_should_call_correct_command_to_install_hooks(
     )
 
 
-@patch("api_bootstrapper_cli.core.precommit_manager.exec_cmd")
+@patch("api_bootstrapper_cli.core.pre_commit_manager.exec_cmd")
 def test_should_handle_install_command_failure(mock_exec: MagicMock, tmp_path: Path):
     manager = PreCommitManager()
     mock_exec.side_effect = Exception("Command failed")
@@ -363,20 +367,20 @@ def test_should_handle_install_command_failure(mock_exec: MagicMock, tmp_path: P
     manager._install_hooks(tmp_path)
 
 
-@patch("api_bootstrapper_cli.core.precommit_manager.exec_cmd")
+@patch("api_bootstrapper_cli.core.pre_commit_manager.exec_cmd")
 def test_should_execute_full_config_creation_flow(mock_exec: MagicMock, tmp_path: Path):
     manager = PreCommitManager()
     pyproject_path = tmp_path / "pyproject.toml"
-    pyproject_content = """\
-[tool.poetry.group.dev.dependencies]
+    pyproject_content = """\[tool.poetry.group.dev.dependencies]
 ruff = "^0.16.0"
 commitizen = "^4.14.0"
 """
     pyproject_path.write_text(pyproject_content)
 
-    config_path, versions = manager.create_config(tmp_path)
+    config_path, versions, already_existed = manager.create_config(tmp_path)
 
     assert config_path.exists()
     assert "ruff" in versions
     assert "commitizen" in versions
+    assert already_existed is False
     assert mock_exec.call_count == 3

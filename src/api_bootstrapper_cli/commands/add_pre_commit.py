@@ -5,13 +5,13 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
-from api_bootstrapper_cli.core.precommit_manager import PreCommitManager
+from api_bootstrapper_cli.core.pre_commit_manager import PreCommitManager
 
 
 console = Console()
 
 
-def add_precommit(
+def add_pre_commit(
     path: Path = typer.Option(
         Path("."), "--path", help="Target project folder (default: current)."
     ),
@@ -21,13 +21,28 @@ def add_precommit(
 
     try:
         manager = PreCommitManager()
-        config_path, versions = manager.create_config(project_root)
+        config_path, versions, config_already_existed = manager.create_config(
+            project_root
+        )
 
         console.print()
-        console.print(
-            "[bold green]✓[/bold green] [green]Pre-commit configured![/green]"
-        )
-        console.print(f"[dim]Created:[/dim] {config_path.relative_to(project_root)}")
+        if config_already_existed:
+            console.print(
+                "[bold yellow]ℹ[/bold yellow] [yellow]Pre-commit config already exists[/yellow]"
+            )
+            console.print(
+                f"[dim]Existing file preserved:[/dim] {config_path.relative_to(project_root)}"
+            )
+            console.print(
+                "[dim]Dependencies and hooks have been updated if needed[/dim]"
+            )
+        else:
+            console.print(
+                "[bold green]✓[/bold green] [green]Pre-commit configured![/green]"
+            )
+            console.print(
+                f"[dim]Created:[/dim] {config_path.relative_to(project_root)}"
+            )
 
         if versions:
             console.print()

@@ -11,20 +11,39 @@ from api_bootstrapper_cli.core.shell import exec_cmd
 
 @dataclass(frozen=True)
 class PreCommitManager:
-    def create_config(self, project_root: Path) -> tuple[Path, dict[str, str]]:
+    def create_config(self, project_root: Path) -> tuple[Path, dict[str, str], bool]:
+        """Create or update pre-commit configuration.
+
+        Args:
+            project_root: Root directory of the project
+
+        Returns:
+            Tuple of (config_path, versions, config_already_existed)
+        """
         if not project_root.exists():
             raise ValueError(f"Project root does not exist: {project_root}")
 
         config_path = project_root / ".pre-commit-config.yaml"
-        content = self._generate_config_content()
-        write_text(config_path, content, overwrite=True)
+        config_already_existed = config_path.exists()
+
+        if config_already_existed:
+            logger.info(
+                "Pre-commit config already exists, skipping config file creation"
+            )
+        else:
+            content = self._generate_config_content()
+            write_text(config_path, content, overwrite=False)
+            logger.success("Created .pre-commit-config.yaml")
 
         self._add_dependencies(project_root)
         versions = self._extract_versions_from_pyproject(project_root)
-        self._update_config_versions(config_path, versions)
+
+        if not config_already_existed:
+            self._update_config_versions(config_path, versions)
+
         self._install_hooks(project_root)
 
-        return config_path, versions
+        return config_path, versions, config_already_existed
 
     def _generate_config_content(self) -> str:
         return """\

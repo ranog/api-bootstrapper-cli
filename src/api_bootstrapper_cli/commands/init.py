@@ -7,7 +7,7 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
-from api_bootstrapper_cli.commands.add_precommit import add_precommit
+from api_bootstrapper_cli.commands.add_pre_commit import add_pre_commit
 from api_bootstrapper_cli.commands.bootstrap_env import bootstrap_env
 
 
@@ -33,7 +33,7 @@ def init(
     """
     Initialize a complete Python project with all features.
 
-    This command combines bootstrap-env and add-precommit in a single workflow,
+    This command combines bootstrap-env and add-pre-commit in a single workflow,
     setting up a fully configured Python development environment.
 
     What it does:
@@ -65,7 +65,7 @@ def init(
 
         # Step 2: Add pre-commit
         console.print("\n[bold]Step 2/2:[/bold] Configuring pre-commit hooks")
-        add_precommit(path=path)
+        add_pre_commit(path=path)
 
         # Success summary
         console.print(

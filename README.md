@@ -91,7 +91,7 @@ source ~/.bashrc  # or ~/.zshrc
 
 Now you can use tab completion:
 ```bash
-api-bootstrapper <TAB>           # Shows: init, bootstrap-env, add-alembic, add-precommit
+api-bootstrapper <TAB>           # Shows: init, bootstrap-env, add-alembic, add-pre-commit
 api-bootstrapper bootstrap-env --<TAB>  # Shows: --path, --python, --install
 ```
 
@@ -126,7 +126,7 @@ For more control, run commands individually:
 api-bootstrapper bootstrap-env --python 3.12.12 --path ./my-project
 
 # Step 2: Add pre-commit hooks (optional)
-api-bootstrapper add-precommit --path ./my-project
+api-bootstrapper add-pre-commit --path ./my-project
 
 # Navigate and activate
 cd my-project
@@ -206,7 +206,7 @@ The tool will automatically set the correct Python constraint in `pyproject.toml
 
 Initialize a complete Python project with all features in one command.
 
-This command combines `bootstrap-env` and `add-precommit` into a single workflow, giving you a fully configured development environment.
+This command combines `bootstrap-env` and `add-pre-commit` into a single workflow, giving you a fully configured development environment.
 
 **Basic usage:**
 
@@ -278,7 +278,7 @@ api-bootstrapper bootstrap-env --python 3.12.12
 # Output: environment already configured ✓
 ```
 
-### add-precommit
+### add-pre-commit
 
 Configures pre-commit hooks with Ruff (linter/formatter) and Commitizen (conventional commits).
 
@@ -288,10 +288,10 @@ Configures pre-commit hooks with Ruff (linter/formatter) and Commitizen (convent
 
 ```bash
 # In current directory
-api-bootstrapper add-precommit
+api-bootstrapper add-pre-commit
 
 # In a specific directory
-api-bootstrapper add-precommit --path ./my-project
+api-bootstrapper add-pre-commit --path ./my-project
 ```
 
 **What it does:**
@@ -309,7 +309,7 @@ api-bootstrapper add-precommit --path ./my-project
 **Example workflow:**
 
 ```bash
-# After running add-precommit
+# After running add-pre-commit
 git add .
 git commit -m "fix: correct bug"  # ✓ Valid conventional commit
 
@@ -332,7 +332,7 @@ After running `init` or `bootstrap-env`, your project will have:
 ```
 my-project/
 ├── .git/                    # Git repository
-├── .pre-commit-config.yaml  # Pre-commit hooks (if add-precommit used)
+├── .pre-commit-config.yaml  # Pre-commit hooks (if add-pre-commit used)
 ├── .python-version          # Python version for pyenv
 ├── .venv/                   # Poetry virtualenv
 ├── .vscode/
@@ -386,7 +386,7 @@ Designed for teams that want **consistent environments** and **deterministic set
 
 - ✅ `init` - Complete project initialization (environment + pre-commit)
 - ✅ `bootstrap-env` - pyenv + Poetry + VSCode
-- ✅ `add-precommit` - Git hooks with Ruff and Commitizen
+- ✅ `add-pre-commit` - Git hooks with Ruff and Commitizen
 - ⬜ `add-alembic` - Database migrations
 - ⬜ `add-docker-postgres` - Local database
 - ⬜ `add-mypy` - Type checking

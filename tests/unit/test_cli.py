@@ -51,7 +51,7 @@ def test_should_list_all_commands():
     assert result.exit_code == 0
     assert "bootstrap-env" in result.stdout
     assert "add-alembic" in result.stdout
-    assert "add-precommit" in result.stdout
+    assert "add-pre-commit" in result.stdout
 
 
 def test_should_show_bootstrap_env_options(expected_bootstrap_help):

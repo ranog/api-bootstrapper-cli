@@ -31,9 +31,9 @@ def test_should_show_command_in_help():
 
 
 @patch("api_bootstrapper_cli.commands.init.bootstrap_env")
-@patch("api_bootstrapper_cli.commands.init.add_precommit")
-def test_should_call_bootstrap_and_precommit(
-    mock_precommit: MagicMock, mock_bootstrap: MagicMock, tmp_path: Path
+@patch("api_bootstrapper_cli.commands.init.add_pre_commit")
+def test_should_call_bootstrap_and_pre_commit(
+    mock_pre_commit: MagicMock, mock_bootstrap: MagicMock, tmp_path: Path
 ):
     result = runner.invoke(
         app, ["init", "--python", "3.12.12", "--path", str(tmp_path)]
@@ -41,13 +41,13 @@ def test_should_call_bootstrap_and_precommit(
 
     assert result.exit_code == 0
     mock_bootstrap.assert_called_once()
-    mock_precommit.assert_called_once()
+    mock_pre_commit.assert_called_once()
 
 
 @patch("api_bootstrapper_cli.commands.init.bootstrap_env")
-@patch("api_bootstrapper_cli.commands.init.add_precommit")
+@patch("api_bootstrapper_cli.commands.init.add_pre_commit")
 def test_should_pass_python_version_to_bootstrap(
-    mock_precommit: MagicMock, mock_bootstrap: MagicMock, tmp_path: Path
+    mock_pre_commit: MagicMock, mock_bootstrap: MagicMock, tmp_path: Path
 ):
     runner.invoke(app, ["init", "--python", "3.13.9", "--path", str(tmp_path)])
 
@@ -56,23 +56,23 @@ def test_should_pass_python_version_to_bootstrap(
 
 
 @patch("api_bootstrapper_cli.commands.init.bootstrap_env")
-@patch("api_bootstrapper_cli.commands.init.add_precommit")
+@patch("api_bootstrapper_cli.commands.init.add_pre_commit")
 def test_should_pass_path_to_both_commands(
-    mock_precommit: MagicMock, mock_bootstrap: MagicMock, tmp_path: Path
+    mock_pre_commit: MagicMock, mock_bootstrap: MagicMock, tmp_path: Path
 ):
     runner.invoke(app, ["init", "--python", "3.12.12", "--path", str(tmp_path)])
 
     bootstrap_kwargs = mock_bootstrap.call_args.kwargs
-    precommit_kwargs = mock_precommit.call_args.kwargs
+    pre_commit_kwargs = mock_pre_commit.call_args.kwargs
 
     assert bootstrap_kwargs["path"] == tmp_path
-    assert precommit_kwargs["path"] == tmp_path
+    assert pre_commit_kwargs["path"] == tmp_path
 
 
 @patch("api_bootstrapper_cli.commands.init.bootstrap_env")
-@patch("api_bootstrapper_cli.commands.init.add_precommit")
+@patch("api_bootstrapper_cli.commands.init.add_pre_commit")
 def test_should_pass_install_flag_to_bootstrap(
-    mock_precommit: MagicMock, mock_bootstrap: MagicMock, tmp_path: Path
+    mock_pre_commit: MagicMock, mock_bootstrap: MagicMock, tmp_path: Path
 ):
     runner.invoke(
         app, ["init", "--python", "3.12.12", "--path", str(tmp_path), "--no-install"]
@@ -83,9 +83,9 @@ def test_should_pass_install_flag_to_bootstrap(
 
 
 @patch("api_bootstrapper_cli.commands.init.bootstrap_env")
-@patch("api_bootstrapper_cli.commands.init.add_precommit")
+@patch("api_bootstrapper_cli.commands.init.add_pre_commit")
 def test_should_show_success_message(
-    mock_precommit: MagicMock, mock_bootstrap: MagicMock, tmp_path: Path
+    mock_pre_commit: MagicMock, mock_bootstrap: MagicMock, tmp_path: Path
 ):
     result = runner.invoke(
         app, ["init", "--python", "3.12.12", "--path", str(tmp_path)]
@@ -98,9 +98,9 @@ def test_should_show_success_message(
 
 
 @patch("api_bootstrapper_cli.commands.init.bootstrap_env")
-@patch("api_bootstrapper_cli.commands.init.add_precommit")
+@patch("api_bootstrapper_cli.commands.init.add_pre_commit")
 def test_should_show_progress_steps(
-    mock_precommit: MagicMock, mock_bootstrap: MagicMock, tmp_path: Path
+    mock_pre_commit: MagicMock, mock_bootstrap: MagicMock, tmp_path: Path
 ):
     result = runner.invoke(
         app, ["init", "--python", "3.12.12", "--path", str(tmp_path)]
@@ -114,9 +114,9 @@ def test_should_show_progress_steps(
 
 
 @patch("api_bootstrapper_cli.commands.init.bootstrap_env")
-@patch("api_bootstrapper_cli.commands.init.add_precommit")
+@patch("api_bootstrapper_cli.commands.init.add_pre_commit")
 def test_should_handle_bootstrap_failure(
-    mock_precommit: MagicMock, mock_bootstrap: MagicMock, tmp_path: Path
+    mock_pre_commit: MagicMock, mock_bootstrap: MagicMock, tmp_path: Path
 ):
     mock_bootstrap.side_effect = Exception("Bootstrap failed")
 
@@ -127,15 +127,15 @@ def test_should_handle_bootstrap_failure(
 
     assert result.exit_code == 1
     assert "Initialization failed" in output
-    mock_precommit.assert_not_called()
+    mock_pre_commit.assert_not_called()
 
 
 @patch("api_bootstrapper_cli.commands.init.bootstrap_env")
-@patch("api_bootstrapper_cli.commands.init.add_precommit")
-def test_should_handle_precommit_failure(
-    mock_precommit: MagicMock, mock_bootstrap: MagicMock, tmp_path: Path
+@patch("api_bootstrapper_cli.commands.init.add_pre_commit")
+def test_should_handle_pre_commit_failure(
+    mock_pre_commit: MagicMock, mock_bootstrap: MagicMock, tmp_path: Path
 ):
-    mock_precommit.side_effect = Exception("Precommit failed")
+    mock_pre_commit.side_effect = Exception("Pre-commit failed")
 
     result = runner.invoke(
         app, ["init", "--python", "3.12.12", "--path", str(tmp_path)]
@@ -153,14 +153,14 @@ def test_should_require_python_argument():
 
 
 @patch("api_bootstrapper_cli.commands.init.bootstrap_env")
-@patch("api_bootstrapper_cli.commands.init.add_precommit")
+@patch("api_bootstrapper_cli.commands.init.add_pre_commit")
 def test_should_use_current_directory_by_default(
-    mock_precommit: MagicMock, mock_bootstrap: MagicMock
+    mock_pre_commit: MagicMock, mock_bootstrap: MagicMock
 ):
     runner.invoke(app, ["init", "--python", "3.12.12"])
 
     bootstrap_kwargs = mock_bootstrap.call_args.kwargs
-    precommit_kwargs = mock_precommit.call_args.kwargs
+    pre_commit_kwargs = mock_pre_commit.call_args.kwargs
 
     assert bootstrap_kwargs["path"].is_absolute()
-    assert precommit_kwargs["path"].is_absolute()
+    assert pre_commit_kwargs["path"].is_absolute()
