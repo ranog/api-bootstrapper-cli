@@ -1,6 +1,5 @@
 # api-bootstrapper-cli
 
-[![Python Version](https://img.shields.io/pypi/pyversions/api-bootstrapper-cli)](https://pypi.org/project/api-bootstrapper-cli/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Tests](https://github.com/ranog/api-bootstrapper-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/ranog/api-bootstrapper-cli/actions/workflows/ci.yml)
@@ -60,12 +59,6 @@ source ~/.bashrc  # or ~/.zshrc if using zsh
 
 > **Note:** If you previously installed via `pip`, uninstall it first: `pip uninstall api-bootstrapper-cli`
 
-### From PyPI
-
-```bash
-pip install api-bootstrapper-cli
-```
-
 ### From source (for development)
 
 ```bash
@@ -82,18 +75,6 @@ To update to the latest version:
 
 ```bash
 pipx install git+https://github.com/ranog/api-bootstrapper-cli.git --force
-```
-
-**If installed via pipx from PyPI (when available):**
-
-```bash
-pipx upgrade api-bootstrapper-cli
-```
-
-**If installed via pip:**
-
-```bash
-pip install --upgrade api-bootstrapper-cli
 ```
 
 ### Enable shell completion (optional)
