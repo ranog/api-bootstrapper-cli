@@ -11,8 +11,6 @@ from api_bootstrapper_cli.core.shell import exec_cmd
 
 @dataclass(frozen=True)
 class PreCommitManager:
-    """Manages .pre-commit-config.yaml creation with Ruff and Commitizen hooks."""
-
     def create_config(self, project_root: Path) -> tuple[Path, dict[str, str]]:
         if not project_root.exists():
             raise ValueError(f"Project root does not exist: {project_root}")
@@ -46,24 +44,57 @@ repos:
 
     def _add_dependencies(self, project_root: Path) -> None:
         logger.info("Adding pre-commit, ruff, and commitizen to dev dependencies...")
+        pyproject_path = project_root / "pyproject.toml"
+
+        if not pyproject_path.exists():
+            logger.error("pyproject.toml not found")
+            raise FileNotFoundError(f"pyproject.toml not found in {project_root}")
+
+        content = read_text(pyproject_path)
+
+        # Check if [tool.poetry.group.dev.dependencies] section exists
+        dev_section = "[tool.poetry.group.dev.dependencies]"
+        if dev_section not in content:
+            # Add the section before [build-system] if possible
+            if "[build-system]" in content:
+                content = content.replace(
+                    "[build-system]", f"{dev_section}\n\n[build-system]"
+                )
+            else:
+                # Append at the end
+                content += f"\n{dev_section}\n"
+
+        # Add dependencies if not already present
+        dependencies = {
+            "pre-commit": "^4.5.1",
+            "ruff": "^0.15.2",
+            "commitizen": "^4.13.8",
+        }
+
+        for dep, version in dependencies.items():
+            if f"{dep} =" not in content:
+                # Find the section and add the dependency
+                content = re.sub(
+                    r"(\[tool\.poetry\.group\.dev\.dependencies\]\n)",
+                    rf'\1{dep} = "{version}"\n',
+                    content,
+                )
+
+        write_text(pyproject_path, content, overwrite=True)
+        logger.success("Dependencies added to pyproject.toml")
+
+        # Run poetry lock to update lock file
+        logger.info("Updating poetry.lock...")
         try:
             exec_cmd(
-                [
-                    "poetry",
-                    "add",
-                    "pre-commit",
-                    "ruff",
-                    "commitizen",
-                    "--group",
-                    "dev",
-                ],
+                ["poetry", "lock", "--no-update"],
                 cwd=str(project_root),
                 check=True,
             )
-            logger.success("Dependencies added successfully")
+            logger.success("poetry.lock updated")
         except Exception as e:
-            logger.error(f"Failed to add dependencies: {e}")
-            raise
+            logger.warning(f"Failed to update lock file: {e}")
+            logger.info("Run 'poetry lock' manually")
 
     def _extract_versions_from_pyproject(self, project_root: Path) -> dict[str, str]:
         pyproject_path = project_root / "pyproject.toml"
@@ -72,19 +103,22 @@ repos:
             return {}
 
         content = read_text(pyproject_path)
+
+        # Verify format
+        if "[tool.poetry.group.dev.dependencies]" not in content:
+            logger.warning("[tool.poetry.group.dev.dependencies] section not found")
+
         versions = {}
 
+        # Extract versions in Poetry format: package = "^version" or package = {version = "^version"}
         if match := re.search(r'pre-commit\s*=\s*"[^"]*?([0-9.]+)"', content):
             versions["pre-commit"] = match.group(1)
-            logger.debug(f"Extracted pre-commit version: {versions['pre-commit']}")
 
         if match := re.search(r'ruff\s*=\s*"[^"]*?([0-9.]+)"', content):
             versions["ruff"] = match.group(1)
-            logger.debug(f"Extracted ruff version: {versions['ruff']}")
 
         if match := re.search(r'commitizen\s*=\s*"[^"]*?([0-9.]+)"', content):
             versions["commitizen"] = match.group(1)
-            logger.debug(f"Extracted commitizen version: {versions['commitizen']}")
 
         if not versions:
             logger.warning("No versions found in pyproject.toml")
@@ -111,7 +145,6 @@ repos:
                 rf'\1"v{versions["ruff"]}"',
                 content,
             )
-            logger.debug(f"Updated ruff version to v{versions['ruff']}")
 
         if "commitizen" in versions:
             content = re.sub(
@@ -119,7 +152,6 @@ repos:
                 rf'\1"v{versions["commitizen"]}"',
                 content,
             )
-            logger.debug(f"Updated commitizen version to v{versions['commitizen']}")
 
         if content == original_content:
             logger.warning("No version replacements were made in config file")

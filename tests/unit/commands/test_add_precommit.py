@@ -116,7 +116,7 @@ def test_should_handle_empty_versions_dict(tmp_path: Path):
         assert "Pre-commit configured!" in output
 
 
-def test_show_hooks_installed_message_with_git(tmp_path: Path):
+def test_should_show_hooks_installed_message_with_git(tmp_path: Path):
     git_hooks = tmp_path / ".git" / "hooks"
     git_hooks.mkdir(parents=True)
 
@@ -140,7 +140,7 @@ def test_show_hooks_installed_message_with_git(tmp_path: Path):
         assert "will now run automatically" in output
 
 
-def test_show_warning_without_git(tmp_path: Path):
+def test_should_show_warning_without_git(tmp_path: Path):
     with patch(
         "api_bootstrapper_cli.commands.add_precommit.PreCommitManager"
     ) as mock_manager:
@@ -201,7 +201,7 @@ def test_should_show_command_in_help():
     assert "add-precommit" in output
 
 
-def test_command_description_in_help():
+def test_should_show_command_description_in_help():
     result = runner.invoke(app, ["add-precommit", "--help"])
     output = strip_ansi_codes(text=result.stdout)
 

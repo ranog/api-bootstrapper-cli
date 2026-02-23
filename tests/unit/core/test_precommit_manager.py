@@ -94,7 +94,7 @@ def test_should_return_correct_config_path(mock_exec: MagicMock, tmp_path: Path)
     assert config_path == tmp_path / ".pre-commit-config.yaml"
 
 
-def test_extract_versions_from_pyproject(tmp_path: Path):
+def test_should_extract_versions_from_pyproject(tmp_path: Path):
     manager = PreCommitManager()
     pyproject_path = tmp_path / "pyproject.toml"
 
@@ -116,7 +116,7 @@ commitizen = "^4.13.8"
     assert versions["commitizen"] == "4.13.8"
 
 
-def test_extract_versions_without_caret(tmp_path: Path):
+def test_should_extract_versions_without_caret(tmp_path: Path):
     manager = PreCommitManager()
     pyproject_path = tmp_path / "pyproject.toml"
 
@@ -135,7 +135,7 @@ commitizen = "4.14.0"
     assert versions["commitizen"] == "4.14.0"
 
 
-def test_extract_versions_returns_empty_dict_when_no_pyproject(tmp_path: Path):
+def test_should_return_empty_dict_when_no_pyproject_exists(tmp_path: Path):
     manager = PreCommitManager()
 
     versions = manager._extract_versions_from_pyproject(tmp_path)
@@ -143,7 +143,7 @@ def test_extract_versions_returns_empty_dict_when_no_pyproject(tmp_path: Path):
     assert versions == {}
 
 
-def test_extract_versions_returns_empty_dict_when_no_dependencies(tmp_path: Path):
+def test_should_return_empty_dict_when_no_dependencies_exist(tmp_path: Path):
     manager = PreCommitManager()
     pyproject_path = tmp_path / "pyproject.toml"
     pyproject_path.write_text("[tool.poetry]\nname = 'test'")
@@ -153,7 +153,7 @@ def test_extract_versions_returns_empty_dict_when_no_dependencies(tmp_path: Path
     assert versions == {}
 
 
-def test_extract_versions_handles_partial_matches(tmp_path: Path):
+def test_should_handle_partial_version_matches(tmp_path: Path):
     manager = PreCommitManager()
     pyproject_path = tmp_path / "pyproject.toml"
 
@@ -169,7 +169,7 @@ ruff = "^0.16.0"
     assert "commitizen" not in versions
 
 
-def test_update_config_versions_updates_ruff_rev(tmp_path: Path):
+def test_should_update_ruff_rev_in_config(tmp_path: Path):
     manager = PreCommitManager()
     config_path = tmp_path / ".pre-commit-config.yaml"
 
@@ -189,7 +189,7 @@ repos:
     assert 'rev: "v0.16.0"' in content
 
 
-def test_update_config_versions_updates_commitizen_rev(tmp_path: Path):
+def test_should_update_commitizen_rev_in_config(tmp_path: Path):
     manager = PreCommitManager()
     config_path = tmp_path / ".pre-commit-config.yaml"
 
@@ -209,7 +209,7 @@ repos:
     assert 'rev: "v4.14.0"' in content
 
 
-def test_update_config_versions_updates_both(tmp_path: Path):
+def test_should_update_both_versions_in_config(tmp_path: Path):
     manager = PreCommitManager()
     config_path = tmp_path / ".pre-commit-config.yaml"
 
@@ -234,7 +234,7 @@ repos:
     assert 'rev: "v4.14.0"' in content
 
 
-def test_update_config_versions_skips_if_file_not_exists(tmp_path: Path):
+def test_should_skip_update_when_file_not_exists(tmp_path: Path):
     manager = PreCommitManager()
     config_path = tmp_path / ".pre-commit-config.yaml"
 
@@ -242,7 +242,7 @@ def test_update_config_versions_skips_if_file_not_exists(tmp_path: Path):
     manager._update_config_versions(config_path, versions)
 
 
-def test_update_config_versions_handles_empty_versions_dict(tmp_path: Path):
+def test_should_handle_empty_versions_dict(tmp_path: Path):
     manager = PreCommitManager()
     config_path = tmp_path / ".pre-commit-config.yaml"
     config_path.write_text("repos:\n  - repo: test\n    rev: ''\n")
@@ -289,37 +289,49 @@ def test_generate_config_should_have_correct_hook_ids():
 
 
 @patch("api_bootstrapper_cli.core.precommit_manager.exec_cmd")
-def test_add_dependencies_calls_poetry_add(mock_exec: MagicMock, tmp_path: Path):
+def test_should_write_dependencies_to_pyproject(mock_exec: MagicMock, tmp_path: Path):
+    """Test that dependencies are written directly to pyproject.toml."""
     manager = PreCommitManager()
+    pyproject_path = tmp_path / "pyproject.toml"
+    pyproject_path.write_text(
+        """[tool.poetry]
+name = "test"
+version = "0.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+"""
+    )
 
     manager._add_dependencies(tmp_path)
 
+    content = pyproject_path.read_text()
+    assert "[tool.poetry.group.dev.dependencies]" in content
+    assert 'pre-commit = "^4.5.1"' in content
+    assert 'ruff = "^0.15.2"' in content
+    assert 'commitizen = "^4.13.8"' in content
+
+    # Verify poetry lock was called
     mock_exec.assert_called_once_with(
-        [
-            "poetry",
-            "add",
-            "pre-commit",
-            "ruff",
-            "commitizen",
-            "--group",
-            "dev",
-        ],
+        ["poetry", "lock", "--no-update"],
         cwd=str(tmp_path),
         check=True,
     )
 
 
 @patch("api_bootstrapper_cli.core.precommit_manager.exec_cmd")
-def test_add_dependencies_handles_command_failure(mock_exec: MagicMock, tmp_path: Path):
+def test_should_handle_missing_pyproject_file(mock_exec: MagicMock, tmp_path: Path):
+    """Test that missing pyproject.toml raises an error."""
     manager = PreCommitManager()
-    mock_exec.side_effect = Exception("Command failed")
 
-    with pytest.raises(Exception, match="Command failed"):
+    with pytest.raises(FileNotFoundError, match="pyproject.toml not found"):
         manager._add_dependencies(tmp_path)
 
 
 @patch("api_bootstrapper_cli.core.precommit_manager.exec_cmd")
-def test_install_hooks_calls_correct_command(mock_exec: MagicMock, tmp_path: Path):
+def test_should_call_correct_command_to_install_hooks(
+    mock_exec: MagicMock, tmp_path: Path
+):
     manager = PreCommitManager()
 
     manager._install_hooks(tmp_path)
@@ -341,7 +353,7 @@ def test_install_hooks_calls_correct_command(mock_exec: MagicMock, tmp_path: Pat
 
 
 @patch("api_bootstrapper_cli.core.precommit_manager.exec_cmd")
-def test_install_hooks_handles_command_failure(mock_exec: MagicMock, tmp_path: Path):
+def test_should_handle_install_command_failure(mock_exec: MagicMock, tmp_path: Path):
     manager = PreCommitManager()
     mock_exec.side_effect = Exception("Command failed")
 
@@ -349,9 +361,7 @@ def test_install_hooks_handles_command_failure(mock_exec: MagicMock, tmp_path: P
 
 
 @patch("api_bootstrapper_cli.core.precommit_manager.exec_cmd")
-def test_create_config_full_flow_with_mocked_commands(
-    mock_exec: MagicMock, tmp_path: Path
-):
+def test_should_execute_full_config_creation_flow(mock_exec: MagicMock, tmp_path: Path):
     manager = PreCommitManager()
     pyproject_path = tmp_path / "pyproject.toml"
     pyproject_content = """\

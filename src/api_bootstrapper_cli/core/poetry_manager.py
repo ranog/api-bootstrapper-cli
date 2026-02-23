@@ -15,24 +15,7 @@ console = Console()
 
 @dataclass(frozen=True)
 class PoetryManager:
-    """Dependency manager using Poetry.
-
-    Implements DependencyManager protocol.
-    Encapsulates all details of Poetry interaction and venv structure.
-    """
-
     def _get_poetry_cmd(self, project_root: Path | None = None) -> str:
-        """Get absolute path to poetry executable.
-
-        If using pyenv, gets the real poetry path from pyenv to bypass shims.
-        Otherwise falls back to searching PATH or using "poetry" command.
-
-        Args:
-            project_root: Project directory with .python-version for pyenv context
-
-        Returns:
-            Absolute path to poetry executable, or "poetry" as fallback
-        """
         try:
             result = exec_cmd(
                 ["pyenv", "which", "poetry"],

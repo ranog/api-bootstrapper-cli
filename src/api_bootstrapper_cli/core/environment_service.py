@@ -14,11 +14,6 @@ from api_bootstrapper_cli.core.protocols import (
 
 @dataclass
 class EnvironmentSetupResult:
-    """Environment setup result.
-
-    Encapsulates information about the configured environment.
-    """
-
     python_version: str
     python_path: Path
     venv_path: Path | None
@@ -28,12 +23,6 @@ class EnvironmentSetupResult:
 
 
 class EnvironmentBootstrapService:
-    """Orchestration service for Python environment bootstrap.
-
-    Separates business logic from presentation and concrete implementations.
-    Uses dependency injection to decouple from specific implementations.
-    """
-
     def __init__(
         self,
         python_env_manager: PythonEnvironmentManager,
@@ -41,14 +30,6 @@ class EnvironmentBootstrapService:
         editor_writer: EditorConfigWriter,
         logger: Logger,
     ):
-        """Initialize the service with its dependencies.
-
-        Args:
-            python_env_manager: Python version manager (pyenv, etc)
-            dependency_manager: Dependency manager (poetry, etc)
-            editor_writer: Editor configuration writer
-            logger: Logging interface
-        """
         self._python_env = python_env_manager
         self._deps = dependency_manager
         self._editor = editor_writer
@@ -60,19 +41,7 @@ class EnvironmentBootstrapService:
         python_version: str,
         install_dependencies: bool = True,
     ) -> EnvironmentSetupResult:
-        """Execute complete project environment bootstrap.
-
-        Args:
-            project_root: Project root directory
-            python_version: Desired Python version
-            install_dependencies: Whether to install dependencies
-
-        Returns:
-            EnvironmentSetupResult with configured environment information
-
-        Raises:
-            ValueError: If pyenv is not installed
-        """
+        # Raises: ValueError if pyenv is not installed
         files.ensure_dir(project_root)
 
         self._validate_requirements()

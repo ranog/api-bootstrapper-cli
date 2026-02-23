@@ -23,16 +23,6 @@ def create_minimal_pyproject(
     project_name: str | None = None,
     python_version: str = "3.12",
 ) -> Path:
-    """Create a minimal pyproject.toml in the project.
-
-    Args:
-        project_root: Project root directory
-        project_name: Project name (default: directory name)
-        python_version: Python version constraint (e.g., "3.12", "3.13.9")
-
-    Returns:
-        Path to the created pyproject.toml
-    """
     if project_name is None:
         project_name = project_root.name
 
@@ -64,15 +54,6 @@ build-backend = "poetry.core.masonry.api"
 
 
 def update_python_constraint(pyproject_path: Path, python_version: str) -> bool:
-    """Update Python version constraint in existing pyproject.toml.
-
-    Args:
-        pyproject_path: Path to pyproject.toml
-        python_version: Python version (e.g., "3.12", "3.9.24")
-
-    Returns:
-        True if updated, False if already correct or file doesn't exist
-    """
     if not pyproject_path.exists():
         return False
 

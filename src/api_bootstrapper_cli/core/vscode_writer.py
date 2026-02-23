@@ -9,24 +9,7 @@ from api_bootstrapper_cli.core.files import ensure_dir, read_text, write_text
 
 @dataclass(frozen=True)
 class VSCodeWriter:
-    """VS Code configuration writer.
-
-    Implements EditorConfigWriter protocol.
-    Encapsulates all details of configuration structure and format.
-    """
-
     def write_config(self, project_root: Path, python_path: Path) -> Path:
-        """Write VS Code configuration for the project.
-
-        Configures Python interpreter and test/formatting settings.
-
-        Args:
-            project_root: Project root directory
-            python_path: Path to the Python executable
-
-        Returns:
-            Path to the created/updated settings.json file
-        """
         settings_path = self._get_settings_path(project_root)
         self._ensure_vscode_dir(project_root)
 

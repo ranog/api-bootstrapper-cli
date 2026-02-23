@@ -74,10 +74,6 @@ def _create_bootstrap_service() -> EnvironmentBootstrapService:
 
 
 def _display_success(result: EnvironmentSetupResult) -> None:
-    """Display success message to the user.
-
-    Presentation responsibility separated from logic.
-    """
     console.print()
     console.print("[bold green]✓[/bold green] [green]Environment ready![/green]")
 

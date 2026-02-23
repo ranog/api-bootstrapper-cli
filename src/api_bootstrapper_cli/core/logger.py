@@ -7,8 +7,6 @@ from rich.console import Console
 
 @dataclass
 class RichLogger:
-    """Logger implementation using Rich Console."""
-
     _console: Console = field(default_factory=Console)
 
     def debug(self, message: str) -> None:
@@ -27,7 +25,6 @@ class RichLogger:
         self._console.print(f"[red]{message}[/red]")
 
     def print(self, message: str) -> None:
-        """Additional method for messages without formatting."""
         self._console.print(message)
 
 

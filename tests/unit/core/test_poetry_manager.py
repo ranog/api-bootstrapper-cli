@@ -101,7 +101,7 @@ def test_should_install_dependencies(mocker, tmp_path: Path):
     assert call_args[1]["check"] is True
 
 
-def test_poetry_commands_use_pyenv_path_when_available(mocker, tmp_path: Path):
+def test_should_use_pyenv_path_when_available(mocker, tmp_path: Path):
     poetry_path = tmp_path / "poetry-executable"
     poetry_path.touch()
     poetry_path.chmod(0o755)
@@ -124,7 +124,7 @@ def test_poetry_commands_use_pyenv_path_when_available(mocker, tmp_path: Path):
     assert mock_exec.call_args_list[1][0][0] == [str(poetry_path), "--version"]
 
 
-def test_poetry_commands_search_path_when_pyenv_fails(mocker, tmp_path: Path):
+def test_should_search_path_when_pyenv_fails(mocker, tmp_path: Path):
     poetry_path = tmp_path / "bin" / "poetry"
     poetry_path.parent.mkdir(parents=True)
     poetry_path.touch()
@@ -148,7 +148,7 @@ def test_poetry_commands_search_path_when_pyenv_fails(mocker, tmp_path: Path):
     assert mock_exec.call_args_list[1][0][0] == [str(poetry_path), "--version"]
 
 
-def test_poetry_commands_fallback_to_poetry_string(mocker):
+def test_should_fallback_to_poetry_string_command(mocker):
     mock_exec = mocker.patch("api_bootstrapper_cli.core.poetry_manager.exec_cmd")
     mock_exec.side_effect = [
         FileNotFoundError("pyenv not found"),

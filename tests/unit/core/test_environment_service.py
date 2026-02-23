@@ -74,7 +74,7 @@ class MockEditorWriter:
         return project_root / ".vscode" / "settings.json"
 
 
-def test_bootstrap_returns_existing_environment_when_already_configured(tmp_path: Path):
+def test_should_return_existing_environment_when_already_configured(tmp_path: Path):
     venv_path = tmp_path / ".venv"
     venv_path.mkdir()
     (venv_path / "bin").mkdir(parents=True)
@@ -111,7 +111,7 @@ def test_bootstrap_returns_existing_environment_when_already_configured(tmp_path
     assert "environment ready" in messages
 
 
-def test_bootstrap_recreates_environment_when_python_version_mismatch(
+def test_should_recreate_environment_when_python_version_mismatches(
     tmp_path: Path, mocker
 ):
     venv_path = tmp_path / ".venv"
@@ -148,7 +148,7 @@ def test_bootstrap_recreates_environment_when_python_version_mismatch(
     assert result.python_version == "3.12.3"
 
 
-def test_bootstrap_creates_environment_when_venv_missing(tmp_path: Path, mocker):
+def test_should_create_environment_when_venv_is_missing(tmp_path: Path, mocker):
     pyproject_path = tmp_path / "pyproject.toml"
     pyproject_path.write_text('[tool.poetry]\nname = "test"\nversion = "1.0.0"')
 
@@ -175,7 +175,7 @@ def test_bootstrap_creates_environment_when_venv_missing(tmp_path: Path, mocker)
     assert result.python_version == "3.12.3"
 
 
-def test_bootstrap_creates_environment_when_pyproject_missing(tmp_path: Path, mocker):
+def test_should_create_environment_when_pyproject_is_missing(tmp_path: Path, mocker):
     venv_path = tmp_path / ".venv"
     venv_path.mkdir()
     (venv_path / "bin").mkdir(parents=True)
@@ -204,7 +204,7 @@ def test_bootstrap_creates_environment_when_pyproject_missing(tmp_path: Path, mo
     assert result.python_version == "3.12.3"
 
 
-def test_bootstrap_creates_environment_when_python_version_file_missing(
+def test_should_create_environment_when_python_version_file_is_missing(
     tmp_path: Path, mocker
 ):
     venv_path = tmp_path / ".venv"
@@ -235,7 +235,7 @@ def test_bootstrap_creates_environment_when_python_version_file_missing(
     assert result.python_version == "3.12.3"
 
 
-def test_bootstrap_raises_error_when_pyenv_not_installed(tmp_path: Path):
+def test_should_raise_error_when_pyenv_not_installed(tmp_path: Path):
     logger = MockLogger()
     python_env = MockPythonEnvManager()
     python_env.installed = False  # Simulate pyenv not installed

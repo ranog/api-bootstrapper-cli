@@ -14,18 +14,7 @@ console = Console()
 
 @dataclass(frozen=True)
 class PyenvManager:
-    """Python version manager using pyenv.
-
-    Implements PythonEnvironmentManager protocol.
-    Encapsulates all details of pyenv interaction.
-    """
-
     def _get_clean_env(self) -> dict[str, str]:
-        """Return clean environment without Python/venv interference.
-
-        Removes variables that could cause pyenv to use wrong Python version
-        or interfere with target project setup.
-        """
         env = os.environ.copy()
 
         env.pop("VIRTUAL_ENV", None)
@@ -66,7 +55,6 @@ class PyenvManager:
         )
 
     def get_python_path(self, version: str) -> Path:
-        """Return path to Python executable (uses pyenv prefix, independent of cwd)."""
         res = exec_cmd(
             ["pyenv", "prefix", version],
             check=True,
