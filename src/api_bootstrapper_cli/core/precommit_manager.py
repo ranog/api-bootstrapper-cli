@@ -98,7 +98,7 @@ repos:
         logger.info("Installing dependencies...")
         try:
             exec_cmd(
-                ["poetry", "install"],
+                ["poetry", "install", "--no-root"],
                 cwd=str(project_root),
                 check=True,
             )

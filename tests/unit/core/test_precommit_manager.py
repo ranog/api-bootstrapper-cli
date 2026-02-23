@@ -317,7 +317,7 @@ requires = ["poetry-core"]
         check=True,
     )
     mock_exec.assert_any_call(
-        ["poetry", "install"],
+        ["poetry", "install", "--no-root"],
         cwd=str(tmp_path),
         check=True,
     )
