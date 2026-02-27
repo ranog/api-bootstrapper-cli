@@ -51,6 +51,10 @@ class DependencyManager(Protocol):
         """Return the path to the Python executable in the virtual environment."""
         ...
 
+    def ensure_venv(self, project_root: Path) -> None:
+        """Ensure virtual environment exists without a full dependency install."""
+        ...
+
     def install_dependencies(self, project_root: Path) -> None:
         """Install the project's dependencies."""
         ...
