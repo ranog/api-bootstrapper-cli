@@ -8,7 +8,8 @@ import typer
 from rich.console import Console
 
 from api_bootstrapper_cli.commands.add_pre_commit import add_pre_commit
-from api_bootstrapper_cli.commands.bootstrap_env import bootstrap_env
+from api_bootstrapper_cli.commands.bootstrap_env import ManagerChoice, bootstrap_env
+from api_bootstrapper_cli.core.shell import ShellError
 
 
 console = Console()
@@ -27,7 +28,13 @@ def init(
     install: bool = typer.Option(
         True,
         "--install/--no-install",
-        help="Install Poetry dependencies after environment setup",
+        help="Install dependencies after environment setup",
+    ),
+    manager: ManagerChoice = typer.Option(
+        ManagerChoice.pyenv,
+        "--manager",
+        help="Python environment / dependency manager backend.",
+        case_sensitive=False,
     ),
 ) -> None:
     """
@@ -61,7 +68,9 @@ def init(
     try:
         # Step 1: Bootstrap environment
         console.print("[bold]Step 1/2:[/bold] Setting up Python environment")
-        bootstrap_env(python_version=python, path=path, install=install)
+        bootstrap_env(
+            python_version=python, path=path, install=install, manager=manager
+        )
 
         # Step 2: Add pre-commit
         console.print("\n[bold]Step 2/2:[/bold] Configuring pre-commit hooks")
@@ -76,6 +85,11 @@ def init(
         console.print("  2. source .venv/bin/activate")
         console.print("  3. Start coding!\n")
 
-    except Exception as e:
+    except (ValueError, RuntimeError, OSError, ShellError) as e:
         console.print(f"\n[bold red]✗ Initialization failed:[/bold red] {e}\n")
+        raise typer.Exit(1) from e
+    except Exception as e:
+        console.print(
+            f"\n[bold red]✗ Initialization failed (unexpected):[/bold red] {e}\n"
+        )
         raise typer.Exit(1) from e

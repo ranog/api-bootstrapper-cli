@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import platform
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from rich.console import Console
@@ -15,6 +15,8 @@ console = Console()
 
 @dataclass(frozen=True)
 class PoetryManager:
+    name: str = field(default="Poetry")
+
     def _get_poetry_cmd(self, project_root: Path | None = None) -> str:
         try:
             result = exec_cmd(
@@ -78,30 +80,40 @@ class PoetryManager:
             return False
 
     def configure_venv(self, project_root: Path) -> None:
-        exec_cmd(
-            [
-                self._get_poetry_cmd(project_root),
-                "config",
-                "virtualenvs.in-project",
-                "true",
-                "--local",
-            ],
-            cwd=str(project_root),
-            check=True,
-            env=self._get_clean_env(),
-        )
+        try:
+            exec_cmd(
+                [
+                    self._get_poetry_cmd(project_root),
+                    "config",
+                    "virtualenvs.in-project",
+                    "true",
+                    "--local",
+                ],
+                cwd=str(project_root),
+                check=True,
+                env=self._get_clean_env(),
+            )
+        except ShellError as e:
+            raise RuntimeError(
+                f"[poetry] Falha ao configurar virtualenv in-project: {e}"
+            ) from e
 
     def use_python(self, project_root: Path, python_path: Path) -> None:
         """Set which Python interpreter Poetry should use.
 
         NOTE: Creates the virtual environment if it doesn't exist yet.
         """
-        exec_cmd(
-            [self._get_poetry_cmd(project_root), "env", "use", str(python_path)],
-            cwd=str(project_root),
-            check=True,
-            env=self._get_clean_env(),
-        )
+        try:
+            exec_cmd(
+                [self._get_poetry_cmd(project_root), "env", "use", str(python_path)],
+                cwd=str(project_root),
+                check=True,
+                env=self._get_clean_env(),
+            )
+        except ShellError as e:
+            raise RuntimeError(
+                f"[poetry] Falha ao vincular Python ao Poetry: {e}"
+            ) from e
 
     def get_venv_path(self, project_root: Path) -> Path:
         """Return path to the project's virtual environment.
@@ -115,38 +127,48 @@ class PoetryManager:
         venv_path = self.get_venv_path(project_root)
         return self._resolve_venv_python(venv_path)
 
-    def install_dependencies(self, project_root: Path) -> None:
-        """Install project dependencies with Poetry.
+    def ensure_venv(self, project_root: Path) -> None:
+        """Ensure virtualenv exists without running a full dependency install.
 
-        NOTE: Uses --no-root to support app projects without package-mode config.
+        Uses poetry env use to create the .venv structure if absent.
+        Safe to call when .venv may already exist.
         """
-        self._ensure_venv_exists(project_root)
+        venv_dir = project_root / ".venv"
+        if venv_dir.exists() and venv_dir.is_dir():
+            return
 
-        with console.status(
-            "[cyan]Installing dependencies with Poetry...[/cyan]",
-            spinner="dots",
-        ):
+        try:
             exec_cmd(
                 [self._get_poetry_cmd(project_root), "install", "--no-root"],
                 cwd=str(project_root),
                 check=True,
                 env=self._get_clean_env(),
             )
+        except ShellError as e:
+            raise RuntimeError(f"[poetry] Falha ao criar virtualenv: {e}") from e
+
+    def install_dependencies(self, project_root: Path) -> None:
+        """Install project dependencies with Poetry.
+
+        NOTE: Uses --no-root to support app projects without package-mode config.
+        """
+        self.ensure_venv(project_root)
+
+        try:
+            with console.status(
+                "[cyan][poetry] Installing dependencies...[/cyan]",
+                spinner="dots",
+            ):
+                exec_cmd(
+                    [self._get_poetry_cmd(project_root), "install", "--no-root"],
+                    cwd=str(project_root),
+                    check=True,
+                    env=self._get_clean_env(),
+                )
+        except ShellError as e:
+            raise RuntimeError(f"[poetry] Falha ao instalar dependências: {e}") from e
 
     def _resolve_venv_python(self, venv_path: Path) -> Path:
         if platform.system() == "Windows":
             return venv_path / "Scripts" / "python.exe"
         return venv_path / "bin" / "python"
-
-    def _ensure_venv_exists(self, project_root: Path) -> None:
-        """Ensure venv exists (Poetry may skip creation for projects without dependencies)."""
-        venv_dir = project_root / ".venv"
-        if venv_dir.exists() and venv_dir.is_dir():
-            return
-
-        exec_cmd(
-            [self._get_poetry_cmd(project_root), "install", "--no-root"],
-            cwd=str(project_root),
-            check=True,
-            env=self._get_clean_env(),
-        )

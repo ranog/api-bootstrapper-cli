@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from rich.console import Console
@@ -14,6 +14,8 @@ console = Console()
 
 @dataclass(frozen=True)
 class PyenvManager:
+    name: str = field(default="pyenv")
+
     def _get_clean_env(self) -> dict[str, str]:
         env = os.environ.copy()
 
@@ -36,15 +38,20 @@ class PyenvManager:
         if version in self._get_installed_versions():
             return
 
-        with console.status(
-            f"[cyan]Installing Python {version} via pyenv...[/cyan]",
-            spinner="dots",
-        ):
-            exec_cmd(
-                ["pyenv", "install", "-s", version],
-                check=True,
-                env=self._get_clean_env(),
-            )
+        try:
+            with console.status(
+                f"[cyan][env] Installing Python {version} via pyenv...[/cyan]",
+                spinner="dots",
+            ):
+                exec_cmd(
+                    ["pyenv", "install", "-s", version],
+                    check=True,
+                    env=self._get_clean_env(),
+                )
+        except ShellError as e:
+            raise RuntimeError(
+                f"[env] Falha ao instalar Python {version} via pyenv: {e}"
+            ) from e
 
     def set_local(self, project_root: Path, version: str) -> None:
         exec_cmd(
@@ -55,26 +62,36 @@ class PyenvManager:
         )
 
     def get_python_path(self, version: str) -> Path:
-        res = exec_cmd(
-            ["pyenv", "prefix", version],
-            check=True,
-            env=self._get_clean_env(),
-        )
+        try:
+            res = exec_cmd(
+                ["pyenv", "prefix", version],
+                check=True,
+                env=self._get_clean_env(),
+            )
+        except ShellError as e:
+            raise RuntimeError(
+                f"[env] Falha ao obter caminho do Python {version}: {e}"
+            ) from e
         python_prefix = Path(res.stdout.strip())
         return python_prefix / "bin" / "python"
 
     def install_pip_packages(self, version: str, packages: list[str]) -> None:
         python_path = self.get_python_path(version)
         packages_str = ", ".join(packages)
-        with console.status(
-            f"[cyan]Installing {packages_str}...[/cyan]",
-            spinner="dots",
-        ):
-            exec_cmd(
-                [str(python_path), "-m", "pip", "install", "--upgrade", *packages],
-                check=True,
-                env=self._get_clean_env(),
-            )
+        try:
+            with console.status(
+                f"[cyan][env] Installing {packages_str}...[/cyan]",
+                spinner="dots",
+            ):
+                exec_cmd(
+                    [str(python_path), "-m", "pip", "install", "--upgrade", *packages],
+                    check=True,
+                    env=self._get_clean_env(),
+                )
+        except ShellError as e:
+            raise RuntimeError(
+                f"[env] Falha ao instalar pacotes pip ({packages_str}): {e}"
+            ) from e
 
     def _get_installed_versions(self) -> set[str]:
         res = exec_cmd(
