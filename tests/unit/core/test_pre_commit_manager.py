@@ -439,7 +439,7 @@ requires = ["hatchling"]
     assert "commitizen>=4.13.8,<4.14" in content
 
     mock_exec.assert_called_once_with(
-        ["uv", "sync"],
+        ["uv", "sync", "--all-groups"],
         cwd=str(tmp_path),
         check=True,
     )

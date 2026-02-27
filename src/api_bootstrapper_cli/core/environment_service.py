@@ -97,7 +97,6 @@ class EnvironmentBootstrapService:
         if not venv_python.exists():
             return False
 
-        # Verify venv Python version matches the requested major.minor
         try:
             version_parts = python_version.split(".")
             expected_major_minor = f"{version_parts[0]}.{version_parts[1]}"

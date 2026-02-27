@@ -1,5 +1,3 @@
-"""Tests for bootstrap_env command – error handling and OS-specific display."""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -16,8 +14,6 @@ from tests.conftest import strip_ansi_codes
 
 runner = CliRunner()
 
-# ── Helper ──────────────────────────────────────────────────────────────────
-
 
 def _make_result(
     venv_path: Path | None = None, has_poetry: bool = True
@@ -30,9 +26,6 @@ def _make_result(
         editor_config_path=Path("/project/.vscode/settings.json"),
         has_poetry_project=has_poetry,
     )
-
-
-# ── bootstrap_env command error-handling tests ───────────────────────────────
 
 
 @patch("api_bootstrapper_cli.commands.bootstrap_env._create_bootstrap_service")
@@ -85,9 +78,6 @@ def test_should_exit_1_and_show_message_on_shell_error(
 
     assert result.exit_code == 1
     assert "Error:" in output
-
-
-# ── _display_success OS-specific output tests ────────────────────────────────
 
 
 def test_display_success_unix_plain_path(tmp_path: Path, capsys):

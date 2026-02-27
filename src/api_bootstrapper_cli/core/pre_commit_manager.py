@@ -13,30 +13,18 @@ from api_bootstrapper_cli.core.shell import exec_cmd
 @dataclass(frozen=True)
 class PreCommitManager:
     def _detect_manager(self, project_root: Path) -> ManagerChoice:
-        """Detect which dependency manager is used in the project.
-
-        Args:
-            project_root: Root directory of the project
-
-        Returns:
-            ManagerChoice.pyenv if Poetry format, ManagerChoice.uv if PEP 621 format
-        """
         pyproject_path = project_root / "pyproject.toml"
         if not pyproject_path.exists():
-            # Default to pyenv if no pyproject.toml
             return ManagerChoice.pyenv
 
         content = read_text(pyproject_path)
 
-        # Check for Poetry format ([tool.poetry])
         if "[tool.poetry]" in content:
             return ManagerChoice.pyenv
 
-        # Check for PEP 621 format ([project])
         if "[project]" in content:
             return ManagerChoice.uv
 
-        # Default to pyenv
         return ManagerChoice.pyenv
 
     def create_config(
@@ -112,7 +100,6 @@ repos:
     def _add_poetry_dependencies(
         self, project_root: Path, pyproject_path: Path, content: str
     ) -> None:
-        """Add dependencies using Poetry format."""
         dev_section = "[tool.poetry.group.dev.dependencies]"
         if dev_section not in content:
             if "[build-system]" in content:
@@ -166,20 +153,14 @@ repos:
     def _add_uv_dependencies(
         self, project_root: Path, pyproject_path: Path, content: str
     ) -> None:
-        """Add dependencies using uv (PEP 621 format)."""
-        # For uv, we need to add to [project.optional-dependencies] dev group
         dev_section = "[project.optional-dependencies]"
 
-        # Check if [project.optional-dependencies] exists
         if dev_section not in content:
-            # Find where to insert it (before [build-system] or at end)
             if "[build-system]" in content:
                 content = content.replace(
                     "[build-system]", f"{dev_section}\ndev = []\n\n[build-system]"
                 )
             elif "[project]" in content:
-                # Add after [project] section
-                # Find the end of [project] section (next section or end of file)
                 match = re.search(r"(\[project\].*?)(\n\[|\Z)", content, re.DOTALL)
                 if match:
                     project_section = match.group(1)
@@ -193,28 +174,24 @@ repos:
             else:
                 content += f"\n{dev_section}\ndev = []\n"
 
-        # Add dependencies to dev array if not present
         dependencies = [
             "pre-commit>=4.5.1",
             "ruff>=0.15.2",
-            "commitizen>=4.13.8,<4.14",  # Restrict to <4.14 to avoid Python <4.0 requirement issue
+            "commitizen>=4.13.8,<4.14",
         ]
 
         for dep in dependencies:
             dep_name = dep.split(">=")[0].split("<")[0]
-            # Check if dependency already in dev list
             if f'"{dep_name}' not in content and f"'{dep_name}" not in content:
-                # Add to dev array
                 content = re.sub(r"(dev\s*=\s*\[)", rf'\1\n    "{dep}",', content)
 
         write_text(pyproject_path, content, overwrite=True)
         logger.success("Dependencies added to pyproject.toml")
 
-        # Use uv to sync dependencies
         logger.info("Syncing dependencies with uv...")
         try:
             exec_cmd(
-                ["uv", "sync"],
+                ["uv", "sync", "--all-groups"],
                 cwd=str(project_root),
                 check=True,
             )
@@ -236,7 +213,6 @@ repos:
         versions = {}
 
         if manager == ManagerChoice.pyenv:
-            # Poetry format
             if "[tool.poetry.group.dev.dependencies]" not in content:
                 logger.warning("[tool.poetry.group.dev.dependencies] section not found")
 
@@ -249,11 +225,9 @@ repos:
             if match := re.search(r'commitizen\s*=\s*"[^"]*?([0-9.]+)"', content):
                 versions["commitizen"] = match.group(1)
         else:
-            # uv format (PEP 621)
             if "[project.optional-dependencies]" not in content:
                 logger.warning("[project.optional-dependencies] section not found")
 
-            # Match versions in array format: "package>=X.Y.Z"
             if match := re.search(r'"pre-commit>=([0-9.]+)"', content):
                 versions["pre-commit"] = match.group(1)
 

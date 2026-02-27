@@ -1,16 +1,9 @@
-"""Unit tests for UvDependencyManager."""
-
 from __future__ import annotations
 
 import pytest
 
 from api_bootstrapper_cli.core.shell import CommandResult, ShellError
 from api_bootstrapper_cli.core.uv_dependency_manager import UvDependencyManager
-
-
-# ---------------------------------------------------------------------------
-# is_installed
-# ---------------------------------------------------------------------------
 
 
 def test_should_detect_uv_is_installed(mocker):
@@ -37,22 +30,12 @@ def test_should_detect_uv_not_installed_when_file_not_found(mocker):
     assert UvDependencyManager().is_installed() is False
 
 
-# ---------------------------------------------------------------------------
-# configure_venv (no-op)
-# ---------------------------------------------------------------------------
-
-
 def test_configure_venv_is_noop(mocker, tmp_path):
     mock_exec = mocker.patch("api_bootstrapper_cli.core.uv_dependency_manager.exec_cmd")
 
     UvDependencyManager().configure_venv(tmp_path)
 
     mock_exec.assert_not_called()
-
-
-# ---------------------------------------------------------------------------
-# use_python
-# ---------------------------------------------------------------------------
 
 
 def test_should_create_venv_with_specified_python(mocker, tmp_path):
@@ -74,11 +57,6 @@ def test_should_raise_runtime_error_when_use_python_fails(mocker, tmp_path):
 
     with pytest.raises(RuntimeError, match=r"\[uv\]"):
         UvDependencyManager().use_python(tmp_path, tmp_path / "python3")
-
-
-# ---------------------------------------------------------------------------
-# ensure_venv
-# ---------------------------------------------------------------------------
 
 
 def test_should_create_venv_when_not_present(mocker, tmp_path):
@@ -110,21 +88,15 @@ def test_should_raise_runtime_error_when_ensure_venv_fails(mocker, tmp_path):
         UvDependencyManager().ensure_venv(tmp_path)
 
 
-# ---------------------------------------------------------------------------
-# install_dependencies
-# ---------------------------------------------------------------------------
-
-
 def test_should_run_uv_sync_to_install_dependencies(mocker, tmp_path):
     mock_exec = mocker.patch("api_bootstrapper_cli.core.uv_dependency_manager.exec_cmd")
     mock_exec.return_value = CommandResult(stdout="", stderr="", returncode=0)
-    # pre-create .venv so ensure_venv is a no-op
     (tmp_path / ".venv").mkdir()
 
     UvDependencyManager().install_dependencies(tmp_path)
 
     call_args = mock_exec.call_args
-    assert call_args[0][0] == ["uv", "sync"]
+    assert call_args[0][0] == ["uv", "sync", "--all-groups"]
     assert call_args[1]["cwd"] == str(tmp_path)
     assert call_args[1]["check"] is True
 
@@ -136,11 +108,6 @@ def test_should_raise_runtime_error_when_sync_fails(mocker, tmp_path):
 
     with pytest.raises(RuntimeError, match=r"\[uv\]"):
         UvDependencyManager().install_dependencies(tmp_path)
-
-
-# ---------------------------------------------------------------------------
-# get_venv_path / get_venv_python
-# ---------------------------------------------------------------------------
 
 
 def test_should_return_venv_path(tmp_path):
@@ -162,11 +129,6 @@ def test_should_return_venv_python_on_windows(mocker, tmp_path):
     result = UvDependencyManager().get_venv_python(tmp_path)
 
     assert result == (tmp_path / ".venv").resolve() / "Scripts" / "python.exe"
-
-
-# ---------------------------------------------------------------------------
-# name attribute
-# ---------------------------------------------------------------------------
 
 
 def test_manager_name_is_uv():

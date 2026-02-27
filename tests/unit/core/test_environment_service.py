@@ -268,9 +268,6 @@ def test_should_raise_error_when_pyenv_not_installed(tmp_path: Path):
         service.bootstrap(tmp_path, "3.12.3", install_dependencies=True)
 
 
-# ── Additional error and edge-case tests (Item 8) ─────────────────────────────
-
-
 def test_should_force_setup_when_venv_python_version_mismatches(tmp_path: Path, mocker):
     """_is_environment_ready returns False when venv Python doesn't match requested version."""
     venv_path = tmp_path / ".venv"
@@ -293,7 +290,6 @@ def test_should_force_setup_when_venv_python_version_mismatches(tmp_path: Path, 
         logger=logger,
     )
 
-    # Simulate venv Python reporting 3.11 while requested is 3.12
     mock_completed = subprocess.CompletedProcess(
         args=[], returncode=0, stdout="Python 3.11.9\n", stderr=""
     )
@@ -303,7 +299,6 @@ def test_should_force_setup_when_venv_python_version_mismatches(tmp_path: Path, 
     ):
         result = service.bootstrap(tmp_path, "3.12.3", install_dependencies=False)
 
-    # Full setup MUST have run (ensure_python called)
     ensure_python_spy.assert_called_once_with("3.12.3")
     assert result.python_version == "3.12.3"
 
@@ -313,7 +308,7 @@ def test_should_force_setup_when_venv_python_not_runnable(tmp_path: Path, mocker
     venv_path = tmp_path / ".venv"
     venv_path.mkdir()
     (venv_path / "bin").mkdir(parents=True)
-    (venv_path / "bin" / "python").touch()  # Not executable
+    (venv_path / "bin" / "python").touch()
 
     (tmp_path / "pyproject.toml").write_text('[tool.poetry]\nname = "t"\nversion = "1"')
     (tmp_path / ".python-version").write_text("3.12.3")

@@ -84,10 +84,11 @@ class UvDependencyManager:
             raise RuntimeError(f"[uv] Falha ao criar virtualenv: {e}") from e
 
     def install_dependencies(self, project_root: Path) -> None:
-        """Sync project dependencies with ``uv sync``.
+        """Sync project dependencies with ``uv sync --all-groups``.
 
         Works with both PEP 621 (``[project]``) and Poetry-style
         (``[tool.poetry]``) pyproject.toml files.
+        Installs all dependency groups including optional ones (e.g., dev).
         """
         self.ensure_venv(project_root)
         try:
@@ -96,7 +97,7 @@ class UvDependencyManager:
                 spinner="dots",
             ):
                 exec_cmd(
-                    ["uv", "sync"],
+                    ["uv", "sync", "--all-groups"],
                     cwd=str(project_root),
                     check=True,
                     env=self._get_clean_env(),

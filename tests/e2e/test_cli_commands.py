@@ -115,13 +115,11 @@ def test_should_skip_install_when_flag_is_set(
         ),  # install_pip_packages (pip install)
     ]
 
-    # Mock _get_poetry_cmd to bypass pyenv which poetry call
     mocker.patch(
         "api_bootstrapper_cli.core.poetry_manager.PoetryManager._get_poetry_cmd",
         return_value="poetry",
     )
 
-    # Mock poetry commands
     mock_poetry_exec = mocker.patch("api_bootstrapper_cli.core.poetry_manager.exec_cmd")
     mock_poetry_exec.side_effect = [
         CommandResult(stdout="Poetry 1.7.0", stderr="", returncode=0),  # is_installed
@@ -148,7 +146,6 @@ def test_should_skip_install_when_flag_is_set(
     )
 
     assert result.exit_code == 0
-    # Verify poetry install was not called
     install_calls = [
         call
         for call in mock_poetry_exec.call_args_list
@@ -159,11 +156,9 @@ def test_should_skip_install_when_flag_is_set(
 
 @pytest.mark.e2e
 def test_should_create_minimal_pyproject_when_missing(mocker, tmp_path: Path):
-    # No pyproject.toml file initially
     pyproject_file = tmp_path / "pyproject.toml"
     assert not pyproject_file.exists()
 
-    # Mock pyenv commands
     mock_pyenv_exec = mocker.patch("api_bootstrapper_cli.core.pyenv_manager.exec_cmd")
     mock_pyenv_exec.side_effect = [
         CommandResult(stdout="pyenv 2.3.0", stderr="", returncode=0),  # is_installed
@@ -190,7 +185,6 @@ def test_should_create_minimal_pyproject_when_missing(mocker, tmp_path: Path):
         return_value="poetry",
     )
 
-    # Mock poetry commands - SHOULD be called now
     mock_poetry_exec = mocker.patch("api_bootstrapper_cli.core.poetry_manager.exec_cmd")
     mock_poetry_exec.return_value = CommandResult(stdout="", stderr="", returncode=0)
 
@@ -198,15 +192,12 @@ def test_should_create_minimal_pyproject_when_missing(mocker, tmp_path: Path):
 
     assert result.exit_code == 0
 
-    # Verify pyproject.toml was created
     assert pyproject_file.exists()
     assert "Creating minimal pyproject.toml" in result.stdout
     assert "Created" in result.stdout
 
-    # Verify Poetry commands WERE called
     assert mock_poetry_exec.call_count > 0
 
-    # Verify VSCode settings were created
     vscode_settings = tmp_path / ".vscode" / "settings.json"
     assert vscode_settings.exists()
 

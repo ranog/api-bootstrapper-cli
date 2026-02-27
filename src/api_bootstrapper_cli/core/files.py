@@ -87,7 +87,6 @@ def update_python_constraint(pyproject_path: Path, python_version: str) -> bool:
 
     content = read_text(pyproject_path)
 
-    # PEP 621 style — check first (more specific match)
     pep621_pattern = r'(requires-python\s*=\s*)["\']([^"\'\n]+)["\']'
     if pep621_match := re.search(pep621_pattern, content):
         target = f">={major_minor}"
@@ -99,7 +98,6 @@ def update_python_constraint(pyproject_path: Path, python_version: str) -> bool:
         write_text(pyproject_path, new_content, overwrite=True)
         return True
 
-    # Poetry style — python = "^X.Y" (only reached for non-PEP-621 files)
     poetry_pattern = r'(python\s*=\s*)["\']([^"\'\n]+)["\']'
     if poetry_match := re.search(poetry_pattern, content):
         target = f"^{major_minor}"

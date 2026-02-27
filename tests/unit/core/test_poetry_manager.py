@@ -169,9 +169,6 @@ def test_should_fallback_to_poetry_string_command(mocker):
     assert mock_exec.call_args_list[1][0][0] == ["poetry", "--version"]
 
 
-# ── Error-handling tests ──────────────────────────────────────────────────────
-
-
 def test_should_raise_runtime_error_when_configure_venv_fails(mocker, tmp_path: Path):
     """configure_venv should raise RuntimeError (not raw ShellError) on failure."""
 
@@ -209,7 +206,7 @@ def test_should_raise_runtime_error_when_install_dependencies_fails(
 ):
     """install_dependencies should raise RuntimeError on ShellError."""
 
-    (tmp_path / ".venv").mkdir()  # venv exists so ensure_venv is skipped
+    (tmp_path / ".venv").mkdir()
     mocker.patch(
         "api_bootstrapper_cli.core.poetry_manager.PoetryManager._get_poetry_cmd",
         return_value="poetry",

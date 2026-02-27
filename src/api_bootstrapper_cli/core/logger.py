@@ -28,5 +28,4 @@ class RichLogger:
         self._console.print(message)
 
 
-# Default logger instance
 logger = RichLogger()

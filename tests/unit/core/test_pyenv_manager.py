@@ -105,9 +105,6 @@ def test_should_get_python_path(mocker):
     assert call_args[1]["check"] is True
 
 
-# ── Error-handling tests ──────────────────────────────────────────────────────
-
-
 def test_should_raise_runtime_error_when_ensure_python_fails(mocker):
     """ensure_python should raise RuntimeError (not ShellError) on failure."""
     mock_exec = mocker.patch("api_bootstrapper_cli.core.pyenv_manager.exec_cmd")
@@ -136,7 +133,6 @@ def test_should_raise_runtime_error_when_get_python_path_fails(mocker):
 def test_should_raise_runtime_error_when_install_pip_packages_fails(mocker):
     """install_pip_packages should raise RuntimeError on ShellError."""
     mock_exec = mocker.patch("api_bootstrapper_cli.core.pyenv_manager.exec_cmd")
-    # First call is get_python_path → succeeds
     mock_exec.side_effect = [
         CommandResult(
             stdout="/home/user/.pyenv/versions/3.12.0\n", stderr="", returncode=0

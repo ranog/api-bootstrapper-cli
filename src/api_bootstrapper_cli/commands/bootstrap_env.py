@@ -66,11 +66,9 @@ def bootstrap_env(
             install_dependencies=install,
         )
 
-        # Presentation layer: display result
         _display_success(result, manager)
 
     except (ValueError, RuntimeError, OSError, ShellError) as e:
-        # Handle validation and operational errors without stacktrace
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1)
 

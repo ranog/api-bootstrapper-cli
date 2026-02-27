@@ -66,17 +66,14 @@ def init(
     console.print("\n[bold cyan]🚀 Initializing Python project...[/bold cyan]\n")
 
     try:
-        # Step 1: Bootstrap environment
         console.print("[bold]Step 1/2:[/bold] Setting up Python environment")
         bootstrap_env(
             python_version=python, path=path, install=install, manager=manager
         )
 
-        # Step 2: Add pre-commit
         console.print("\n[bold]Step 2/2:[/bold] Configuring pre-commit hooks")
         add_pre_commit(path=path, manager=manager)
 
-        # Success summary
         console.print(
             "\n[bold green]✓ Project initialized successfully![/bold green]\n"
         )
