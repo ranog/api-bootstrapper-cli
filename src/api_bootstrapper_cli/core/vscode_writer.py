@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from api_bootstrapper_cli.core.files import ensure_dir, read_text, write_text
+from api_bootstrapper_cli.core.files import ensure_dir, read_text
 
 
 @dataclass(frozen=True)
@@ -17,7 +19,7 @@ class VSCodeWriter:
         settings = self._update_settings(settings, project_root, python_path)
 
         self._write_settings(settings_path, settings)
-        return settings_path
+        return settings_path.resolve()
 
     def _get_settings_path(self, project_root: Path) -> Path:
         return project_root / ".vscode" / "settings.json"
@@ -73,4 +75,17 @@ class VSCodeWriter:
 
     def _write_settings(self, settings_path: Path, settings: dict) -> None:
         content = json.dumps(settings, indent=2) + "\n"
-        write_text(settings_path, content, overwrite=True)
+        # Write to a temp file in the same directory then rename atomically
+        tmp_fd, tmp_path = tempfile.mkstemp(
+            dir=settings_path.parent, prefix=".settings_", suffix=".tmp"
+        )
+        try:
+            with os.fdopen(tmp_fd, "w", encoding="utf-8") as f:
+                f.write(content)
+            os.replace(tmp_path, settings_path)
+        except Exception:
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+            raise
