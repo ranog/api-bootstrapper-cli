@@ -22,7 +22,17 @@ def create_minimal_pyproject(
     project_root: Path,
     project_name: str | None = None,
     python_version: str = "3.10",
+    use_pep621: bool = False,
 ) -> Path:
+    """Create a minimal pyproject.toml in *project_root*.
+
+    Args:
+        project_root: Directory where the file will be created.
+        project_name: Project name (defaults to directory name).
+        python_version: Python version string (e.g. ``"3.12.3"``).
+        use_pep621: When ``True`` generate a PEP 621 ``[project]`` file
+            (required by ``uv``). Otherwise generate a Poetry-style file.
+    """
     if project_name is None:
         project_name = project_root.name
 
@@ -34,7 +44,17 @@ def create_minimal_pyproject(
     version_parts = python_version.split(".")
     major_minor = f"{version_parts[0]}.{version_parts[1]}"
 
-    content = f"""[tool.poetry]
+    if use_pep621:
+        content = f"""[project]
+name = "{project_name}"
+version = "0.1.0"
+description = ""
+readme = "README.md"
+requires-python = ">={major_minor}"
+dependencies = []
+"""
+    else:
+        content = f"""[tool.poetry]
 name = "{project_name}"
 version = "0.1.0"
 description = ""
@@ -54,30 +74,39 @@ build-backend = "poetry.core.masonry.api"
 
 
 def update_python_constraint(pyproject_path: Path, python_version: str) -> bool:
+    """Update the Python version constraint in an existing pyproject.toml.
+
+    Handles both PEP 621 (``requires-python = ">=X.Y"``) and Poetry-style
+    (``python = "^X.Y"``) formats.
+    """
     if not pyproject_path.exists():
         return False
 
     version_parts = python_version.split(".")
     major_minor = f"{version_parts[0]}.{version_parts[1]}"
-    target_constraint = f"^{major_minor}"
 
     content = read_text(pyproject_path)
 
-    python_constraint_pattern = r'(python\s*=\s*)["\']([^"\'\n]+)["\']'
+    # PEP 621 style — check first (more specific match)
+    pep621_pattern = r'(requires-python\s*=\s*)["\']([^"\'\n]+)["\']'
+    if pep621_match := re.search(pep621_pattern, content):
+        target = f">={major_minor}"
+        if pep621_match.group(2) == target:
+            return False
+        new_content = re.sub(
+            pep621_pattern, f'requires-python = "{target}"', content, count=1
+        )
+        write_text(pyproject_path, new_content, overwrite=True)
+        return True
 
-    if not (match := re.search(python_constraint_pattern, content)):
-        return False
+    # Poetry style — python = "^X.Y" (only reached for non-PEP-621 files)
+    poetry_pattern = r'(python\s*=\s*)["\']([^"\'\n]+)["\']'
+    if poetry_match := re.search(poetry_pattern, content):
+        target = f"^{major_minor}"
+        if poetry_match.group(2) == target:
+            return False
+        new_content = re.sub(poetry_pattern, f'\\1"{target}"', content, count=1)
+        write_text(pyproject_path, new_content, overwrite=True)
+        return True
 
-    current_constraint = match.group(2)
-    if current_constraint == target_constraint:
-        return False
-
-    new_content = re.sub(
-        python_constraint_pattern,
-        f'\\1"{target_constraint}"',
-        content,
-        count=1,
-    )
-
-    write_text(pyproject_path, new_content, overwrite=True)
-    return True
+    return False
