@@ -14,11 +14,39 @@ app = typer.Typer(
     rich_markup_mode="rich",
 )
 
+# ── Sub-app groups ─────────────────────────────────────────────────────────────
+env_app = typer.Typer(
+    no_args_is_help=True,
+    help="[cyan]Manage Python environment[/cyan] (pyenv + Poetry + VSCode).",
+    rich_markup_mode="rich",
+)
+
+hooks_app = typer.Typer(
+    no_args_is_help=True,
+    help="[cyan]Manage git hooks[/cyan] and code-quality tools.",
+    rich_markup_mode="rich",
+)
+
+db_app = typer.Typer(
+    no_args_is_help=True,
+    help="[cyan]Manage database migrations[/cyan] (Alembic).",
+    rich_markup_mode="rich",
+)
+
+env_app.command("bootstrap")(bootstrap_env)
+hooks_app.command("add-pre-commit")(add_pre_commit)
+db_app.command("add-alembic")(add_alembic)
+
+app.add_typer(env_app, name="env")
+app.add_typer(hooks_app, name="hooks")
+app.add_typer(db_app, name="db")
+
+# ── Top-level commands (kept for backward compatibility) ───────────────────────
 app.command("init")(init)
 app.command("bootstrap-env")(bootstrap_env)
 app.command("add-alembic")(add_alembic)
 app.command("add-pre-commit")(add_pre_commit)
 
 
-def main():
+def main() -> None:
     app()
