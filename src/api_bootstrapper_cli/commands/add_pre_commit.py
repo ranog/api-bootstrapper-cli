@@ -13,7 +13,12 @@ console = Console()
 
 def add_pre_commit(
     path: Path = typer.Option(
-        Path("."), "--path", help="Target project folder (default: current)."
+        Path("."),
+        "--path",
+        help="Target project folder (default: current).",
+        file_okay=False,
+        dir_okay=True,
+        resolve_path=True,
     ),
 ) -> None:
     """Add pre-commit configuration with Ruff and Commitizen hooks."""
