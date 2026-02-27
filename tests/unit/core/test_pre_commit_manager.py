@@ -385,3 +385,137 @@ commitizen = "^4.14.0"
     assert "commitizen" in versions
     assert already_existed is False
     assert mock_exec.call_count == 3
+
+
+def test_should_detect_poetry_manager_format(tmp_path: Path):
+    manager = PreCommitManager()
+    pyproject_path = tmp_path / "pyproject.toml"
+    pyproject_path.write_text("[tool.poetry]\nname = 'test'")
+
+    detected = manager._detect_manager(tmp_path)
+
+    assert detected == ManagerChoice.pyenv
+
+
+def test_should_detect_uv_manager_format(tmp_path: Path):
+    manager = PreCommitManager()
+    pyproject_path = tmp_path / "pyproject.toml"
+    pyproject_path.write_text("[project]\nname = 'test'")
+
+    detected = manager._detect_manager(tmp_path)
+
+    assert detected == ManagerChoice.uv
+
+
+def test_should_default_to_pyenv_when_no_pyproject(tmp_path: Path):
+    manager = PreCommitManager()
+
+    detected = manager._detect_manager(tmp_path)
+
+    assert detected == ManagerChoice.pyenv
+
+
+@patch("api_bootstrapper_cli.core.pre_commit_manager.exec_cmd")
+def test_should_add_uv_dependencies_to_pyproject(mock_exec: MagicMock, tmp_path: Path):
+    manager = PreCommitManager()
+    pyproject_path = tmp_path / "pyproject.toml"
+    pyproject_path.write_text(
+        """[project]
+name = "test"
+version = "0.1.0"
+
+[build-system]
+requires = ["hatchling"]
+"""
+    )
+
+    manager._add_dependencies(tmp_path, ManagerChoice.uv)
+
+    content = pyproject_path.read_text()
+    assert "[project.optional-dependencies]" in content
+    assert "dev = [" in content
+    assert "pre-commit>=4.5.1" in content
+    assert "ruff>=0.15.2" in content
+    assert "commitizen>=4.13.8,<4.14" in content
+
+    mock_exec.assert_called_once_with(
+        ["uv", "sync"],
+        cwd=str(tmp_path),
+        check=True,
+    )
+
+
+@patch("api_bootstrapper_cli.core.pre_commit_manager.exec_cmd")
+def test_should_extract_versions_from_uv_format(mock_exec: MagicMock, tmp_path: Path):
+    manager = PreCommitManager()
+    pyproject_path = tmp_path / "pyproject.toml"
+    pyproject_content = """\
+[project.optional-dependencies]
+dev = [
+    "pre-commit>=4.5.1",
+    "ruff>=0.15.2",
+    "commitizen>=4.13.8,<4.14",
+]
+"""
+    pyproject_path.write_text(pyproject_content)
+
+    versions = manager._extract_versions_from_pyproject(tmp_path, ManagerChoice.uv)
+
+    assert "pre-commit" in versions
+    assert "ruff" in versions
+    assert "commitizen" in versions
+    assert versions["pre-commit"] == "4.5.1"
+    assert versions["ruff"] == "0.15.2"
+    assert versions["commitizen"] == "4.13.8"
+
+
+@patch("api_bootstrapper_cli.core.pre_commit_manager.exec_cmd")
+def test_should_call_uv_run_to_install_hooks(mock_exec: MagicMock, tmp_path: Path):
+    manager = PreCommitManager()
+
+    manager._install_hooks(tmp_path, ManagerChoice.uv)
+
+    mock_exec.assert_called_once_with(
+        [
+            "uv",
+            "run",
+            "pre-commit",
+            "install",
+            "--hook-type",
+            "pre-commit",
+            "--hook-type",
+            "commit-msg",
+        ],
+        cwd=str(tmp_path),
+        check=True,
+    )
+
+
+@patch("api_bootstrapper_cli.core.pre_commit_manager.exec_cmd")
+def test_should_execute_full_config_creation_flow_with_uv(
+    mock_exec: MagicMock, tmp_path: Path
+):
+    manager = PreCommitManager()
+    pyproject_path = tmp_path / "pyproject.toml"
+    pyproject_content = """\
+[project]
+name = "test"
+version = "0.1.0"
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.16.0",
+    "commitizen>=4.14.0",
+]
+"""
+    pyproject_path.write_text(pyproject_content)
+
+    config_path, versions, already_existed = manager.create_config(
+        tmp_path, ManagerChoice.uv
+    )
+
+    assert config_path.exists()
+    assert "ruff" in versions
+    assert "commitizen" in versions
+    assert already_existed is False
+    assert mock_exec.call_count == 2  # uv sync + uv run pre-commit install

@@ -19,9 +19,6 @@ install:
 	poetry install
 
 test:
-	poetry run pytest -n auto
-
-test-cov:
 	poetry run pytest -n auto --cov=src/api_bootstrapper_cli --cov-report=term-missing --cov-report=html
 
 test-unit:

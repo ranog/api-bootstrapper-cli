@@ -180,8 +180,6 @@ repos:
             elif "[project]" in content:
                 # Add after [project] section
                 # Find the end of [project] section (next section or end of file)
-                import re
-
                 match = re.search(r"(\[project\].*?)(\n\[|\Z)", content, re.DOTALL)
                 if match:
                     project_section = match.group(1)
