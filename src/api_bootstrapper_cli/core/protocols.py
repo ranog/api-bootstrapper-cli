@@ -1,7 +1,15 @@
 from __future__ import annotations
 
+import enum
 from pathlib import Path
 from typing import Protocol
+
+
+class ManagerChoice(str, enum.Enum):
+    """Manager backend for Python environment and dependencies."""
+
+    pyenv = "pyenv"
+    uv = "uv"
 
 
 class PythonEnvironmentManager(Protocol):

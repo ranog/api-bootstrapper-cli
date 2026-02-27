@@ -39,6 +39,7 @@ lint:
 format:
 	poetry run ruff format src tests
 	poetry run ruff check --fix src tests
+	poetry run mypy src tests
 
 type-check:
 	poetry run mypy src tests

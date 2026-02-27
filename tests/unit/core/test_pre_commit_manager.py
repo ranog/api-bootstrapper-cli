@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from api_bootstrapper_cli.core.pre_commit_manager import PreCommitManager
+from api_bootstrapper_cli.core.protocols import ManagerChoice
 
 
 @patch("api_bootstrapper_cli.core.pre_commit_manager.exec_cmd")
@@ -110,7 +111,7 @@ commitizen = "^4.13.8"
 """
     pyproject_path.write_text(pyproject_content)
 
-    versions = manager._extract_versions_from_pyproject(tmp_path)
+    versions = manager._extract_versions_from_pyproject(tmp_path, ManagerChoice.pyenv)
 
     assert "pre-commit" in versions
     assert "ruff" in versions
@@ -132,7 +133,7 @@ commitizen = "4.14.0"
 """
     pyproject_path.write_text(pyproject_content)
 
-    versions = manager._extract_versions_from_pyproject(tmp_path)
+    versions = manager._extract_versions_from_pyproject(tmp_path, ManagerChoice.pyenv)
 
     assert versions["pre-commit"] == "4.5.0"
     assert versions["ruff"] == "0.16.0"
@@ -142,7 +143,7 @@ commitizen = "4.14.0"
 def test_should_return_empty_dict_when_no_pyproject_exists(tmp_path: Path):
     manager = PreCommitManager()
 
-    versions = manager._extract_versions_from_pyproject(tmp_path)
+    versions = manager._extract_versions_from_pyproject(tmp_path, ManagerChoice.pyenv)
 
     assert versions == {}
 
@@ -152,7 +153,7 @@ def test_should_return_empty_dict_when_no_dependencies_exist(tmp_path: Path):
     pyproject_path = tmp_path / "pyproject.toml"
     pyproject_path.write_text("[tool.poetry]\nname = 'test'")
 
-    versions = manager._extract_versions_from_pyproject(tmp_path)
+    versions = manager._extract_versions_from_pyproject(tmp_path, ManagerChoice.pyenv)
 
     assert versions == {}
 
@@ -167,7 +168,7 @@ ruff = "^0.16.0"
 """
     pyproject_path.write_text(pyproject_content)
 
-    versions = manager._extract_versions_from_pyproject(tmp_path)
+    versions = manager._extract_versions_from_pyproject(tmp_path, ManagerChoice.pyenv)
 
     assert "ruff" in versions
     assert "commitizen" not in versions
@@ -306,7 +307,7 @@ requires = ["poetry-core"]
 """
     )
 
-    manager._add_dependencies(tmp_path)
+    manager._add_dependencies(tmp_path, ManagerChoice.pyenv)
 
     content = pyproject_path.read_text()
     assert "[tool.poetry.group.dev.dependencies]" in content
@@ -332,7 +333,7 @@ def test_should_handle_missing_pyproject_file(mock_exec: MagicMock, tmp_path: Pa
     manager = PreCommitManager()
 
     with pytest.raises(FileNotFoundError, match="pyproject.toml not found"):
-        manager._add_dependencies(tmp_path)
+        manager._add_dependencies(tmp_path, ManagerChoice.pyenv)
 
 
 @patch("api_bootstrapper_cli.core.pre_commit_manager.exec_cmd")
@@ -341,7 +342,7 @@ def test_should_call_correct_command_to_install_hooks(
 ):
     manager = PreCommitManager()
 
-    manager._install_hooks(tmp_path)
+    manager._install_hooks(tmp_path, ManagerChoice.pyenv)
 
     mock_exec.assert_called_once_with(
         [
@@ -364,7 +365,7 @@ def test_should_handle_install_command_failure(mock_exec: MagicMock, tmp_path: P
     manager = PreCommitManager()
     mock_exec.side_effect = Exception("Command failed")
 
-    manager._install_hooks(tmp_path)
+    manager._install_hooks(tmp_path, ManagerChoice.pyenv)
 
 
 @patch("api_bootstrapper_cli.core.pre_commit_manager.exec_cmd")

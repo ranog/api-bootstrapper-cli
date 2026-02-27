@@ -6,6 +6,7 @@ import typer
 from rich.console import Console
 
 from api_bootstrapper_cli.core.pre_commit_manager import PreCommitManager
+from api_bootstrapper_cli.core.protocols import ManagerChoice
 
 
 console = Console()
@@ -20,14 +21,20 @@ def add_pre_commit(
         dir_okay=True,
         resolve_path=True,
     ),
+    manager: ManagerChoice | None = None,
 ) -> None:
-    """Add pre-commit configuration with Ruff and Commitizen hooks."""
+    """Add pre-commit configuration with Ruff and Commitizen hooks.
+
+    Args:
+        path: Target project folder
+        manager: Optional manager choice. If None, auto-detect from pyproject.toml
+    """
     project_root = path.resolve()
 
     try:
-        manager = PreCommitManager()
-        config_path, versions, config_already_existed = manager.create_config(
-            project_root
+        manager_instance = PreCommitManager()
+        config_path, versions, config_already_existed = manager_instance.create_config(
+            project_root, manager
         )
 
         console.print()

@@ -450,6 +450,42 @@ eval "$(pyenv init -)"
 # Then reload your shell:
 source ~/.bashrc  # or ~/.zshrc
 ```
+
+### pyenv: command not found (pip/python/pip3)
+
+**Symptom:** `pyenv: pip: command not found` or `pyenv: python: command not found`
+
+This happens when no Python version is set as global or local in pyenv. Even though you have Python versions installed via pyenv, none of them is active.
+
+**Solution:**
+
+```bash
+# Set a global Python version
+pyenv global 3.12.12
+
+# Or set a local version for the current directory
+pyenv local 3.12.12
+
+# Verify it worked
+python --version
+pip --version
+```
+
+**After setting the version, you can install packages:**
+
+```bash
+pip install uv
+```
+
+**Alternative: Install uv without pip (recommended)**
+
+```bash
+# Using the official installer (works without pip)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+> **Tip:** If you frequently switch between projects, use `pyenv local` instead of `pyenv global` to set different Python versions per directory.
+
 ### uv not found
 
 **Symptom:** `Error: uv not found in PATH. Install uv first.`
@@ -467,6 +503,111 @@ pipx install uv
 # Make sure ~/.cargo/bin or ~/.local/bin is in PATH:
 source ~/.bashrc  # or ~/.zshrc
 ```
+
+### pyenv: uv: command not found (when using --manager uv)
+
+**Symptom:** `pyenv: uv: command not found. The 'uv' command exists in these Python versions: X.Y.Z`
+
+This happens when `uv` was installed with `pip install uv` inside a specific pyenv Python version, making it unavailable when the project switches to a different Python version.
+
+**Problem:**
+```bash
+# uv installed via pip in Python 3.13.9
+pyenv global 3.13.9
+pip install uv  # ❌ uv only available in 3.13.9
+
+# When project uses Python 3.12.1, uv is not found
+api-bootstrapper bootstrap-env --python 3.12.1 --manager uv
+# Error: pyenv: uv: command not found
+```
+
+**Solution: Install uv globally (outside pyenv)**
+
+```bash
+# Option 1: Official installer (recommended)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Option 2: pipx (installs in isolated environment)
+pipx install uv
+
+# Option 3: Install in ALL pyenv versions
+pyenv global <your-version>
+pip install uv
+# Then add uv to each version you use
+```
+
+**After installing globally:**
+
+```bash
+# Verify uv is accessible regardless of Python version
+which uv  # Should show ~/.cargo/bin/uv or ~/.local/bin/uv (not a pyenv path)
+
+# Now try again
+api-bootstrapper bootstrap-env --python 3.12.1 --manager uv --path foo/
+```
+
+> **Key difference:** 
+> - `pip install uv` → installs in current Python version only
+> - `curl ... | sh` or `pipx install uv` → installs globally, works with any Python version
+
+### uv SSL certificate error (invalid peer certificate: UnknownIssuer)
+
+**Symptom:** `error: Failed to install cpython-X.Y.Z ... invalid peer certificate: UnknownIssuer`
+
+This happens when uv can't verify GitHub's SSL certificate, commonly caused by:
+- Corporate proxy with SSL inspection
+- Outdated CA certificates on your system
+- Network firewalls intercepting HTTPS
+
+**Solution 1: Update CA certificates (recommended)**
+
+```bash
+# Debian/Ubuntu
+sudo apt update && sudo apt install --reinstall ca-certificates
+
+# Fedora/RHEL/CentOS
+sudo dnf reinstall ca-certificates
+
+# After updating, test:
+curl -I https://github.com
+```
+
+**Solution 2: Configure corporate proxy certificates**
+
+If behind a corporate proxy, you need to trust its certificate:
+
+```bash
+# Get your corporate CA certificate (usually provided by IT)
+# Then add it to the system trust store
+
+# Debian/Ubuntu
+sudo cp corporate-ca.crt /usr/local/share/ca-certificates/
+sudo update-ca-certificates
+
+# Fedora/RHEL/CentOS
+sudo cp corporate-ca.crt /etc/pki/ca-trust/source/anchors/
+sudo update-ca-trust
+```
+
+**Solution 3: Use pyenv backend instead**
+
+If SSL issues persist, use pyenv which builds Python from source:
+
+```bash
+# Use pyenv instead of uv
+api-bootstrapper bootstrap-env --python 3.12.1 --manager pyenv --path foo/
+```
+
+**Temporary workaround (NOT recommended for production):**
+
+```bash
+# Skip SSL verification (security risk!)
+export UV_NO_VERIFY_SSL=1
+api-bootstrapper bootstrap-env --python 3.12.1 --manager uv --path foo/
+```
+
+> **Security warning:** Only use `UV_NO_VERIFY_SSL=1` in trusted networks for testing. Never use in production or untrusted networks.
+
 ### Python build dependencies (Linux)
 
 When `pyenv install` fails with compilation errors, install the required system libraries:

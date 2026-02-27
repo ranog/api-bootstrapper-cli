@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import enum
 import platform
 from pathlib import Path
 
@@ -13,18 +12,12 @@ from api_bootstrapper_cli.core.environment_service import (
 )
 from api_bootstrapper_cli.core.logger import RichLogger
 from api_bootstrapper_cli.core.poetry_manager import PoetryManager
+from api_bootstrapper_cli.core.protocols import ManagerChoice
 from api_bootstrapper_cli.core.pyenv_manager import PyenvManager
 from api_bootstrapper_cli.core.shell import ShellError
 from api_bootstrapper_cli.core.uv_dependency_manager import UvDependencyManager
 from api_bootstrapper_cli.core.uv_python_manager import UvPythonManager
 from api_bootstrapper_cli.core.vscode_writer import VSCodeWriter
-
-
-class ManagerChoice(str, enum.Enum):
-    """Supported environment / dependency manager backends."""
-
-    pyenv = "pyenv"
-    uv = "uv"
 
 
 console = Console()

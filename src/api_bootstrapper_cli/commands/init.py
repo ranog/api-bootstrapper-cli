@@ -74,7 +74,7 @@ def init(
 
         # Step 2: Add pre-commit
         console.print("\n[bold]Step 2/2:[/bold] Configuring pre-commit hooks")
-        add_pre_commit(path=path)
+        add_pre_commit(path=path, manager=manager)
 
         # Success summary
         console.print(
