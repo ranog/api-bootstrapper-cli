@@ -82,5 +82,17 @@ def test_should_return_settings_file_path(tmp_path: Path):
 
     settings_path = writer.write_config(tmp_path, python_path)
 
-    assert settings_path == tmp_path / ".vscode" / "settings.json"
+    assert settings_path == (tmp_path / ".vscode" / "settings.json").resolve()
     assert settings_path.exists()
+
+
+def test_should_write_atomically_no_temp_file_left(tmp_path: Path):
+    """After write_config, no leftover .tmp files should remain in .vscode."""
+    writer = VSCodeWriter()
+    python_path = Path("/usr/bin/python3")
+
+    writer.write_config(tmp_path, python_path)
+
+    vscode_dir = tmp_path / ".vscode"
+    tmp_files = list(vscode_dir.glob("*.tmp"))
+    assert tmp_files == [], f"Unexpected temp files left: {tmp_files}"

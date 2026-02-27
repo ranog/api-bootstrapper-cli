@@ -200,8 +200,8 @@ def test_should_create_minimal_pyproject_when_missing(mocker, tmp_path: Path):
 
     # Verify pyproject.toml was created
     assert pyproject_file.exists()
-    assert "creating minimal pyproject.toml" in result.stdout
-    assert "created" in result.stdout
+    assert "Creating minimal pyproject.toml" in result.stdout
+    assert "Created" in result.stdout
 
     # Verify Poetry commands WERE called
     assert mock_poetry_exec.call_count > 0

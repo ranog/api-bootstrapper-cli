@@ -25,12 +25,13 @@ def normalize_help_lines(text: str) -> list[str]:
 def expected_bootstrap_help() -> list[str]:
     return [
         "Usage: root bootstrap-env [OPTIONS]",
-        "Setup Python environment with pyenv, Poetry, and VSCode configuration.",
+        "Setup Python environment with a chosen manager and VSCode configuration.",
         "Creates or configures:",
-        "- Python version via pyenv (.python-version)",
-        "- Poetry virtual environment (.venv)",
+        "- Python version (.python-version)",
+        "- Virtual environment (.venv)",
         "- VSCode Python settings (.vscode/settings.json)",
         "- Minimal pyproject.toml (if doesn't exist)",
+        "Supported managers: pyenv (default, uses Poetry) | uv",
     ]
 
 

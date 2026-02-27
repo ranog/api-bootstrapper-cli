@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from api_bootstrapper_cli.core.pyenv_manager import PyenvManager
 from api_bootstrapper_cli.core.shell import CommandResult, ShellError
 
@@ -101,3 +103,47 @@ def test_should_get_python_path(mocker):
     call_args = mock_exec.call_args
     assert call_args[0][0] == ["pyenv", "prefix", "3.12.0"]
     assert call_args[1]["check"] is True
+
+
+# ── Error-handling tests ──────────────────────────────────────────────────────
+
+
+def test_should_raise_runtime_error_when_ensure_python_fails(mocker):
+    """ensure_python should raise RuntimeError (not ShellError) on failure."""
+    mock_exec = mocker.patch("api_bootstrapper_cli.core.pyenv_manager.exec_cmd")
+    mock_exec.side_effect = [
+        CommandResult(stdout="", stderr="", returncode=0),  # _get_installed_versions
+        ShellError("build failed"),  # pyenv install
+    ]
+    manager = PyenvManager()
+
+    with pytest.raises(RuntimeError, match=r"\[env\].*Falha ao instalar Python"):
+        manager.ensure_python("3.12.99")
+
+
+def test_should_raise_runtime_error_when_get_python_path_fails(mocker):
+    """get_python_path should raise RuntimeError on ShellError."""
+    mock_exec = mocker.patch("api_bootstrapper_cli.core.pyenv_manager.exec_cmd")
+    mock_exec.side_effect = ShellError("version not found")
+    manager = PyenvManager()
+
+    with pytest.raises(
+        RuntimeError, match=r"\[env\].*Falha ao obter caminho do Python"
+    ):
+        manager.get_python_path("3.12.99")
+
+
+def test_should_raise_runtime_error_when_install_pip_packages_fails(mocker):
+    """install_pip_packages should raise RuntimeError on ShellError."""
+    mock_exec = mocker.patch("api_bootstrapper_cli.core.pyenv_manager.exec_cmd")
+    # First call is get_python_path → succeeds
+    mock_exec.side_effect = [
+        CommandResult(
+            stdout="/home/user/.pyenv/versions/3.12.0\n", stderr="", returncode=0
+        ),
+        ShellError("pip install failed"),
+    ]
+    manager = PyenvManager()
+
+    with pytest.raises(RuntimeError, match=r"\[env\].*Falha ao instalar pacotes pip"):
+        manager.install_pip_packages("3.12.0", ["pip", "wheel"])
