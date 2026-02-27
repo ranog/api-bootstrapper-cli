@@ -6,19 +6,20 @@
 
 A modular and extensible CLI for bootstrapping Python projects with opinionated platform defaults.
 
-Automates the setup of **pyenv**, **Poetry**, and **VSCode** configuration in a single command, following manual setup best practices.
+Automates the setup of **pyenv + Poetry** or **uv**, plus **VSCode** configuration in a single command, following manual setup best practices.
 
 ---
 
 ## ✨ Features
 
-- 🐍 **Python Version Management** - Automatic installation and configuration via pyenv
-- 📦 **Dependency Management** - Poetry setup with in-project virtualenv
+- 🐍 **Python Version Management** - Automatic installation and configuration via pyenv or uv
+- 📦 **Dependency Management** - Poetry or uv setup with in-project virtualenv
 - 🔧 **VSCode Integration** - Auto-generated settings for Python interpreter and testing
 - 🪝 **Pre-commit Hooks** - Automated setup with Ruff and Commitizen
 - 🚀 **Smart Detection** - Skips setup if environment already exists
 - 🎯 **Zero Configuration** - Creates minimal `pyproject.toml` if missing
 - 🔒 **Environment Isolation** - Clean environment to prevent version conflicts
+- 🔄 **Pluggable Backends** - Choose between pyenv/Poetry (default) or uv via `--manager`
 - ✅ **Battle-tested** - Comprehensive test suite with high coverage
 
 ---
@@ -104,17 +105,23 @@ api-bootstrapper bootstrap-env --<TAB>  # Shows: --path, --python, --install
 Initialize a complete Python project with a single command:
 
 ```bash
-# Complete setup: environment + pre-commit hooks
+# Complete setup with pyenv + Poetry (default)
 api-bootstrapper init --python 3.12.12 --path ./my-project
+
+# Complete setup with uv (faster, single tool)
+api-bootstrapper init --python 3.12.12 --path ./my-project --manager uv
 
 # Navigate and activate
 cd my-project
 source .venv/bin/activate
 
-# Start coding!
+# With pyenv+Poetry backend:
 python --version  # Python 3.12.12
-poetry --version  # Poetry (version 2.3.2)
-pre-commit --version  # pre-commit x.x.x
+poetry --version  # Poetry (version 2.x.x)
+
+# With uv backend:
+python --version  # Python 3.12.12
+uv --version      # uv 0.x.x
 ```
 
 ### Option 2: Step-by-Step
@@ -122,8 +129,11 @@ pre-commit --version  # pre-commit x.x.x
 For more control, run commands individually:
 
 ```bash
-# Step 1: Setup Python environment
+# Step 1: Setup Python environment (default: pyenv + Poetry)
 api-bootstrapper bootstrap-env --python 3.12.12 --path ./my-project
+
+# Step 1 (alternative): Setup with uv
+api-bootstrapper bootstrap-env --python 3.12.12 --path ./my-project --manager uv
 
 # Step 2: Add pre-commit hooks (optional)
 api-bootstrapper add-pre-commit --path ./my-project
@@ -155,8 +165,9 @@ source .venv/bin/activate
 
 **For using the CLI:**
 - [pipx](https://pipx.pypa.io/) (recommended) or pip
-- macOS or Linux  
-- [pyenv](https://github.com/pyenv/pyenv) installed
+- macOS or Linux
+- **Backend: pyenv (default)** — [pyenv](https://github.com/pyenv/pyenv) installed  
+  **Backend: uv** — [uv](https://github.com/astral-sh/uv) installed (`pip install uv` or `curl -LsSf https://astral.sh/uv/install.sh | sh`)
 
 **Target project can be:**
 - **Empty directory** - Will create a minimal `pyproject.toml` and setup full environment
@@ -211,8 +222,11 @@ This command combines `bootstrap-env` and `add-pre-commit` into a single workflo
 **Basic usage:**
 
 ```bash
-# Initialize new project
+# Initialize new project (default: pyenv + Poetry)
 api-bootstrapper init --python 3.12.12 --path ./my-project
+
+# Initialize new project with uv
+api-bootstrapper init --python 3.12.12 --path ./my-project --manager uv
 
 # In current directory
 api-bootstrapper init --python 3.13.9
@@ -223,48 +237,59 @@ api-bootstrapper init --python 3.12.12 --no-install
 
 **What it does:**
 
-1. ✅ Sets up Python environment (pyenv + Poetry + VSCode)
+1. ✅ Sets up Python environment (pyenv or uv + VSCode)
 2. ✅ Installs pre-commit, ruff, and commitizen dependencies
 3. ✅ Configures pre-commit hooks
 4. ✅ Shows clear next steps
 
 **This is the recommended command for new projects!**
 
+See [`--manager` option](#-manager-option) below for choosing between pyenv+Poetry and uv.
+
 ---
 
 ### bootstrap-env
 
-Sets up a complete Python development environment with pyenv, Poetry, and VSCode configuration.
+Sets up a complete Python development environment and VSCode configuration.
+
+Supports two backends via `--manager`:
+- **`pyenv`** (default) — uses pyenv for Python installation + Poetry for dependencies
+- **`uv`** — uses uv for both Python installation and dependency management (faster)
 
 > **💡 Tip:** If you want environment + pre-commit in one command, use `init` instead.
 
 **Basic usage:**
 
 ```bash
-# In current directory
+# Default backend: pyenv + Poetry
 api-bootstrapper bootstrap-env --python 3.12.12
-
-# In a specific directory
 api-bootstrapper bootstrap-env --python 3.13.9 --path ./my-api
-
-# Skip dependency installation
 api-bootstrapper bootstrap-env --python 3.12.12 --no-install
 
-# For an existing project
-cd existing-project
-api-bootstrapper bootstrap-env --python 3.12.12
+# uv backend (faster, single tool)
+api-bootstrapper bootstrap-env --python 3.12.12 --manager uv
+api-bootstrapper bootstrap-env --python 3.13.9 --path ./my-api --manager uv
 ```
 
-**What it does:**
+**What it does (pyenv + Poetry backend):**
 
 1. ✅ Installs Python version via pyenv (if not installed)
 2. ✅ Creates `.python-version` file
 3. ✅ Installs `pip`, `setuptools`, `wheel`, and `poetry` in project's Python
-4. ✅ Creates minimal `pyproject.toml` if missing (never overwrites)
+4. ✅ Creates minimal `pyproject.toml` if missing (Poetry format, never overwrites)
 5. ✅ Configures Poetry with in-project virtualenv (`.venv`)
 6. ✅ Creates Poetry environment
 7. ✅ Installs dependencies (unless `--no-install`)
 8. ✅ Generates VSCode `settings.json` with Python interpreter
+
+**What it does (uv backend):**
+
+1. ✅ Installs Python version via `uv python install` (if not installed)
+2. ✅ Creates `.python-version` file via `uv python pin`
+3. ✅ Creates minimal `pyproject.toml` if missing (PEP 621 format, never overwrites)
+4. ✅ Creates in-project virtualenv (`.venv`) via `uv venv`
+5. ✅ Installs/syncs dependencies via `uv sync` (unless `--no-install`)
+6. ✅ Generates VSCode `settings.json` with Python interpreter
 
 **Smart detection:**
 Running the command a second time on the same project will skip setup if the environment is already configured.
@@ -277,6 +302,20 @@ api-bootstrapper bootstrap-env --python 3.12.12
 api-bootstrapper bootstrap-env --python 3.12.12
 # Output: environment already configured ✓
 ```
+
+---
+
+### `--manager` option
+
+All commands that bootstrap an environment accept `--manager pyenv` (default) or `--manager uv`.
+
+| Option | Python version tool | Dependency tool | pyproject.toml format |
+|---|---|---|---|
+| `--manager pyenv` | `pyenv install` | `poetry install` | `[tool.poetry]` (Poetry) |
+| `--manager uv` | `uv python install` | `uv sync` | `[project]` (PEP 621) |
+
+> **When to use uv?** uv is significantly faster and requires only one tool to install.
+> Choose `pyenv` when the project already uses Poetry or requires a specific pyenv workflow.
 
 ### add-pre-commit
 
@@ -333,14 +372,14 @@ After running `init` or `bootstrap-env`, your project will have:
 my-project/
 ├── .git/                    # Git repository
 ├── .pre-commit-config.yaml  # Pre-commit hooks (if add-pre-commit used)
-├── .python-version          # Python version for pyenv
-├── .venv/                   # Poetry virtualenv
+├── .python-version          # Python version (pyenv or uv)
+├── .venv/                   # Virtual environment
 ├── .vscode/
 │   └── settings.json        # VSCode Python configuration
-└── pyproject.toml           # Poetry configuration
+└── pyproject.toml           # Project configuration (format depends on --manager)
 ```
 
-### Generated pyproject.toml
+### Generated pyproject.toml — pyenv + Poetry backend (`--manager pyenv`)
 
 If no `pyproject.toml` exists, a minimal one is created:
 
@@ -360,12 +399,23 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 ```
 
+### Generated pyproject.toml — uv backend (`--manager uv`)
+
+```toml
+[project]
+name = "my-project"
+version = "0.1.0"
+description = ""
+readme = "README.md"
+requires-python = ">=3.10"  # automatically set from --python version
+dependencies = []
+```
+
 **Important:**
 - Python version constraint automatically matches your specified `--python` version
-- Default is `^3.10` if no version specified
-- Uses `[tool.poetry]` section (standard Poetry format)
-- The CLI uses `poetry install --no-root` for dependencies only
-- Works for both libraries and applications
+- Poetry backend uses `[tool.poetry]` section with caret constraint (`^X.Y`)
+- uv backend uses `[project]` section (PEP 621) with floor constraint (`>=X.Y`)
+- Neither file is ever overwritten if `pyproject.toml` already exists
 
 ---
 
@@ -382,11 +432,132 @@ Designed for teams that want **consistent environments** and **deterministic set
 
 ---
 
-## 🗺️ Roadmap
+## � Troubleshooting
 
-- ✅ `init` - Complete project initialization (environment + pre-commit)
-- ✅ `bootstrap-env` - pyenv + Poetry + VSCode
-- ✅ `add-pre-commit` - Git hooks with Ruff and Commitizen
+### pyenv not found
+
+**Symptom:** `Error: pyenv not found in PATH. Install pyenv first.`
+
+```bash
+# Install pyenv (Linux)
+curl https://pyenv.run | bash
+
+# Add to ~/.bashrc or ~/.zshrc:
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
+
+# Then reload your shell:
+source ~/.bashrc  # or ~/.zshrc
+```
+### uv not found
+
+**Symptom:** `Error: uv not found in PATH. Install uv first.`
+
+```bash
+# Install uv (Linux/macOS)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Or with pip
+pip install uv
+
+# Or with pipx
+pipx install uv
+
+# Make sure ~/.cargo/bin or ~/.local/bin is in PATH:
+source ~/.bashrc  # or ~/.zshrc
+```
+### Python build dependencies (Linux)
+
+When `pyenv install` fails with compilation errors, install the required system libraries:
+
+```bash
+# Debian / Ubuntu
+sudo apt install -y build-essential libssl-dev zlib1g-dev \
+  libbz2-dev libreadline-dev libsqlite3-dev libffi-dev \
+  liblzma-dev tk-dev
+
+# Fedora / RHEL / CentOS
+sudo dnf install -y gcc zlib-devel bzip2 bzip2-devel readline-devel \
+  sqlite sqlite-devel openssl-devel tk-devel libffi-devel xz-devel
+```
+
+### Poetry not found
+
+**Symptom:** The CLI can't locate `poetry` after installation.
+
+```bash
+# Check if Poetry is installed
+poetry --version
+
+# Install Poetry via pipx (recommended)
+pipx install poetry
+
+# Or install via the official installer
+curl -sSL https://install.python-poetry.org | python3 -
+
+# Make sure $HOME/.local/bin is in PATH:
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+### Permission error when removing poetry.lock
+
+If you see a warning about `poetry.lock` not being removable:
+
+```bash
+rm poetry.lock
+api-bootstrapper bootstrap-env --python <version> --path .
+```
+
+### SSL errors when installing packages
+
+```bash
+# Test connectivity
+python -m pip install --upgrade pip
+
+# If behind a corporate proxy, configure pip:
+pip config set global.proxy http://proxy.example.com:8080
+
+# Or set pip trusted hosts:
+pip config set global.trusted-host "pypi.org files.pythonhosted.org pypi.python.org"
+```
+
+### bootstrap-env re-runs even though environment exists
+
+This happens when the venv Python major.minor doesn't match `.python-version`. Delete
+the venv and let the CLI recreate it:
+
+```bash
+# pyenv + Poetry backend
+rm -rf .venv poetry.lock
+api-bootstrapper bootstrap-env --python <version> --path .
+
+# uv backend
+rm -rf .venv uv.lock
+api-bootstrapper bootstrap-env --python <version> --path . --manager uv
+```
+
+---
+
+## 📋 Compatibility Matrix
+
+| Component | Supported versions | Notes |
+|-----------|-------------------|-------|
+| **Python (CLI requires)** | 3.12+ | Runtime to run the CLI itself |
+| **Python (target project)** | 3.10+ | The version you pass via `--python` |
+| **pyenv** | 2.3+ | Earlier versions may lack `pyenv prefix` |
+| **Poetry** | 1.8+ | Uses `poetry install --no-root` |
+| **uv** | 0.4+ | Uses `uv python install` + `uv sync` |
+| **macOS** | 12 Monterey+ | Intel & Apple Silicon tested |
+| **Linux** | Ubuntu 22.04+, Fedora 38+ | Any modern distro should work |
+| **Windows** | Partial | Activation instructions adapted; pyenv-win needed |
+
+> **Note:** Windows support is experimental. Use [pyenv-win](https://github.com/pyenv-win/pyenv-win) and run commands in PowerShell or Git Bash.
+
+---
+
+## �🗺️ Roadmap
+- ✅ `bootstrap-env` - pyenv + Poetry + VSCode- ✅ `bootstrap-env --manager uv` - uv + VSCode- ✅ `add-pre-commit` - Git hooks with Ruff and Commitizen
 - ⬜ `add-alembic` - Database migrations
 - ⬜ `add-docker-postgres` - Local database
 - ⬜ `add-mypy` - Type checking
