@@ -5,9 +5,11 @@ from pathlib import Path
 import pytest
 
 from api_bootstrapper_cli.core.files import (
+    create_env_example,
     create_minimal_pyproject,
     ensure_dir,
     read_text,
+    update_gitignore,
     update_python_constraint,
     write_text,
 )
@@ -212,3 +214,102 @@ python   =   "^3.12"
     assert updated is True
     content = pyproject.read_text()
     assert 'python = "^3.10"' in content or 'python   =   "^3.10"' in content
+
+
+def test_create_env_example_should_create_template_file(tmp_path: Path):
+    create_env_example(tmp_path)
+
+    env_file = tmp_path / ".env.example"
+    assert env_file.exists()
+
+    content = env_file.read_text()
+    assert "PYTHONDONTWRITEBYTECODE=1" in content
+    assert "Environment variables template" in content
+    assert "Copy this file to .env" in content
+
+
+def test_create_env_example_should_add_variable_to_existing(tmp_path: Path):
+    env_example = tmp_path / ".env.example"
+    original_content = "# Custom content\nMY_VAR=value\n"
+    env_example.write_text(original_content)
+
+    create_env_example(tmp_path)
+
+    content = env_example.read_text()
+    assert "PYTHONDONTWRITEBYTECODE=1" in content
+    assert "MY_VAR=value" in content
+    assert content.startswith("# Python Configuration")
+
+
+def test_create_env_example_should_not_duplicate_variable(tmp_path: Path):
+    env_example = tmp_path / ".env.example"
+    original_content = "# My config\nPYTHONDONTWRITEBYTECODE=1\nMY_VAR=value\n"
+    env_example.write_text(original_content)
+
+    create_env_example(tmp_path)
+
+    content = env_example.read_text()
+    assert content.count("PYTHONDONTWRITEBYTECODE") == 1
+    assert content == original_content
+
+
+def test_create_env_example_should_handle_env_local(tmp_path: Path):
+    env_local = tmp_path / ".env.local"
+    env_local.write_text("DATABASE_URL=localhost\n")
+
+    create_env_example(tmp_path)
+
+    content = env_local.read_text()
+    assert "PYTHONDONTWRITEBYTECODE=1" in content
+    assert "DATABASE_URL=localhost" in content
+
+
+def test_create_env_example_should_handle_env_testing(tmp_path: Path):
+    env_testing = tmp_path / ".env.testing"
+    env_testing.write_text("TEST_MODE=true\n")
+
+    create_env_example(tmp_path)
+
+    content = env_testing.read_text()
+    assert "PYTHONDONTWRITEBYTECODE=1" in content
+    assert "TEST_MODE=true" in content
+
+
+def test_update_gitignore_should_do_nothing_if_not_exists(tmp_path: Path):
+    update_gitignore(tmp_path)
+
+    gitignore = tmp_path / ".gitignore"
+    assert not gitignore.exists()
+
+
+def test_update_gitignore_should_add_env_patterns_to_existing(tmp_path: Path):
+    gitignore = tmp_path / ".gitignore"
+    gitignore.write_text("# Existing patterns\n*.pyc\n__pycache__/\n")
+
+    update_gitignore(tmp_path)
+
+    content = gitignore.read_text()
+    assert "*.pyc" in content  # Original content preserved
+    assert "__pycache__/" in content
+    assert ".env" in content
+    assert ".env.local" in content
+    assert "!.env.example" in content
+
+
+def test_update_gitignore_should_not_duplicate_env_patterns(tmp_path: Path):
+    gitignore = tmp_path / ".gitignore"
+    original_content = """# Environment variables
+.env
+.env.local
+!.env.example
+*.pyc
+"""
+    gitignore.write_text(original_content)
+
+    update_gitignore(tmp_path)
+
+    content = gitignore.read_text()
+    # Count occurrences
+    assert content.count(".env\n") == 1
+    assert content.count(".env.local\n") == 1
+    assert content.count("!.env.example\n") == 1

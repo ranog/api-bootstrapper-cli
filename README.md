@@ -6,7 +6,7 @@
 
 A modular and extensible CLI for bootstrapping Python projects with opinionated platform defaults.
 
-Automates the setup of **pyenv + Poetry** or **uv**, plus **VSCode** configuration in a single command, following manual setup best practices.
+Automates the setup of **pyenv + Poetry** or **uv**, plus **VSCode** configuration and **environment variables** in a single command, following manual setup best practices.
 
 ---
 
@@ -16,7 +16,8 @@ Automates the setup of **pyenv + Poetry** or **uv**, plus **VSCode** configurati
 - 📦 **Dependency Management** - Poetry or uv setup with in-project virtualenv
 - 🔧 **VSCode Integration** - Auto-generated settings for Python interpreter and testing
 - 🪝 **Pre-commit Hooks** - Automated setup with Ruff and Commitizen
-- 🚀 **Smart Detection** - Skips setup if environment already exists
+- � **Environment Variables** - Creates `.env.example` template with `PYTHONDONTWRITEBYTECODE=1`
+- �🚀 **Smart Detection** - Skips setup if environment already exists
 - 🎯 **Zero Configuration** - Creates minimal `pyproject.toml` if missing
 - 🔒 **Environment Isolation** - Clean environment to prevent version conflicts
 - 🔄 **Pluggable Backends** - Choose between pyenv/Poetry (default) or uv via `--manager`
@@ -217,7 +218,7 @@ The tool will automatically set the correct Python constraint in `pyproject.toml
 
 Initialize a complete Python project with all features in one command.
 
-This command combines `bootstrap-env` and `add-pre-commit` into a single workflow, giving you a fully configured development environment.
+This command combines `bootstrap-env`, environment configuration, and `add-pre-commit` into a single workflow, giving you a fully configured development environment.
 
 **Basic usage:**
 
@@ -238,9 +239,11 @@ api-bootstrapper init --python 3.12.12 --no-install
 **What it does:**
 
 1. ✅ Sets up Python environment (pyenv or uv + VSCode)
-2. ✅ Installs pre-commit, ruff, and commitizen dependencies
-3. ✅ Configures pre-commit hooks
-4. ✅ Shows clear next steps
+2. ✅ Creates `.env.example` with `PYTHONDONTWRITEBYTECODE=1`
+3. ✅ Updates `.gitignore` to exclude `.env` files (if `.gitignore` exists)
+4. ✅ Installs pre-commit, ruff, and commitizen dependencies
+5. ✅ Configures pre-commit hooks
+6. ✅ Shows clear next steps
 
 **This is the recommended command for new projects!**
 
@@ -370,7 +373,9 @@ After running `init` or `bootstrap-env`, your project will have:
 
 ```
 my-project/
+├── .env.example             # Environment variables template (created by init)
 ├── .git/                    # Git repository
+├── .gitignore               # Git ignore rules (updated by init if exists)
 ├── .pre-commit-config.yaml  # Pre-commit hooks (if add-pre-commit used)
 ├── .python-version          # Python version (pyenv or uv)
 ├── .venv/                   # Virtual environment
@@ -378,6 +383,29 @@ my-project/
 │   └── settings.json        # VSCode Python configuration
 └── pyproject.toml           # Project configuration (format depends on --manager)
 ```
+
+### Environment Configuration
+
+The `init` command creates a `.env.example` file with sensible defaults:
+
+```bash
+# Environment variables template
+# Copy this file to .env and fill in your actual values
+
+# Python Configuration
+PYTHONDONTWRITEBYTECODE=1  # Prevents creation of __pycache__ and .pyc files
+
+# Add your project-specific environment variables below
+# DATABASE_URL=postgresql://user:password@localhost:5432/dbname
+# SECRET_KEY=your-secret-key-here
+# DEBUG=False
+```
+
+**Behavior:**
+- If `.env.example`, `.env.local`, or `.env.testing` already exist → adds `PYTHONDONTWRITEBYTECODE=1` if missing
+- If none exist → creates `.env.example` with the template above
+- If `.gitignore` exists → adds rules to exclude `.env` and `.env.local` (but allows `.env.example`)
+- If `.gitignore` doesn't exist → only creates `.env.example` (doesn't create `.gitignore`)
 
 ### Generated pyproject.toml — pyenv + Poetry backend (`--manager pyenv`)
 
@@ -698,7 +726,10 @@ api-bootstrapper bootstrap-env --python <version> --path . --manager uv
 ---
 
 ## �🗺️ Roadmap
-- ✅ `bootstrap-env` - pyenv + Poetry + VSCode- ✅ `bootstrap-env --manager uv` - uv + VSCode- ✅ `add-pre-commit` - Git hooks with Ruff and Commitizen
+- ✅ `bootstrap-env` - pyenv + Poetry + VSCode
+- ✅ `bootstrap-env --manager uv` - uv + VSCode
+- ✅ `add-pre-commit` - Git hooks with Ruff and Commitizen
+- ✅ Environment variables - `.env.example` template with `PYTHONDONTWRITEBYTECODE=1`
 - ⬜ `add-alembic` - Database migrations
 - ⬜ `add-docker-postgres` - Local database
 - ⬜ `add-mypy` - Type checking

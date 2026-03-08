@@ -108,3 +108,94 @@ def update_python_constraint(pyproject_path: Path, python_version: str) -> bool:
         return True
 
     return False
+
+
+def create_env_example(project_root: Path) -> None:
+    """Create or update .env.example template file with PYTHONDONTWRITEBYTECODE=1.
+
+    Logic:
+    - Checks if .env.example, .env.local, or .env.testing exist
+    - If any exist: ensures PYTHONDONTWRITEBYTECODE=1 is present
+    - If none exist: creates .env.example with PYTHONDONTWRITEBYTECODE=1
+
+    Args:
+        project_root: Directory where the file will be created or updated.
+    """
+    env_files = [
+        project_root / ".env.example",
+        project_root / ".env.local",
+        project_root / ".env.testing",
+    ]
+
+    # Find existing env files
+    existing_env_files = [f for f in env_files if f.exists()]
+
+    if existing_env_files:
+        # Check and update existing files
+        for env_file in existing_env_files:
+            content = read_text(env_file)
+            if "PYTHONDONTWRITEBYTECODE" not in content:
+                # Add the variable at the beginning
+                new_content = (
+                    "# Python Configuration\nPYTHONDONTWRITEBYTECODE=1\n\n" + content
+                )
+                write_text(env_file, new_content, overwrite=True)
+    else:
+        # Create new .env.example
+        env_example_path = project_root / ".env.example"
+        content = """# Environment variables template
+# Copy this file to .env and fill in your actual values
+
+# Python Configuration
+PYTHONDONTWRITEBYTECODE=1
+
+# Add your project-specific environment variables below
+# DATABASE_URL=postgresql://user:password@localhost:5432/dbname
+# SECRET_KEY=your-secret-key-here
+# DEBUG=False
+"""
+        write_text(env_example_path, content)
+
+
+def update_gitignore(project_root: Path) -> None:
+    """Update .gitignore to exclude environment files (only if .gitignore exists).
+
+    Logic:
+    - If .gitignore does NOT exist: do nothing (don't create it)
+    - If .gitignore exists: add .env exclusion rules if not present
+
+    Ensures that .env (with sensitive data) is not committed to git,
+    while .env.example (template) can be versioned.
+
+    Args:
+        project_root: Directory containing the .gitignore file.
+    """
+    gitignore_path = project_root / ".gitignore"
+
+    # Only proceed if .gitignore already exists
+    if not gitignore_path.exists():
+        return
+
+    env_patterns = {
+        "# Environment variables",
+        ".env",
+        ".env.local",
+        "!.env.example",
+    }
+
+    content = read_text(gitignore_path)
+    lines = set(content.splitlines())
+
+    # Check if env patterns are already present
+    if env_patterns.issubset(lines):
+        return
+
+    # Add env patterns if missing
+    missing_patterns = env_patterns - lines
+    if missing_patterns:
+        # Add a newline before the section if file doesn't end with one
+        separator = "\n" if content and not content.endswith("\n") else ""
+        new_content = (
+            content + separator + "\n" + "\n".join(sorted(missing_patterns)) + "\n"
+        )
+        write_text(gitignore_path, new_content, overwrite=True)
