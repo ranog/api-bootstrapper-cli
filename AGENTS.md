@@ -127,6 +127,28 @@ src/api_bootstrapper_cli/
 - criar novos protocolos apenas quando surgir um novo tipo de abstração ou comportamento relevante
 - evitar criação de novos módulos ou abstrações sem ganho claro de coesão e clareza
 
+## Quando criar novos componentes:
+
+**Criar novo Manager quando:**
+- houver integração com nova ferramenta externa (ex: git, docker, npm)
+- surgir responsabilidade bem isolada que não pertence a nenhum manager existente
+- a complexidade de um manager crescer demais e puder ser dividida por ferramenta/responsabilidade
+
+**Criar novo Service quando:**
+- houver necessidade de coordenar múltiplos managers em fluxo complexo
+- a lógica de orquestração for reutilizável em múltiplos comandos
+- o comando ficar muito complexo e precisar de camada intermediária
+
+**Criar novo Protocol quando:**
+- houver múltiplas implementações possíveis de um mesmo comportamento (ex: pyenv/uv)
+- for necessário abstrair detalhes de implementação para facilitar testes
+- surgir necessidade de trocar implementações em runtime
+
+**NÃO criar novos componentes quando:**
+- a funcionalidade cabe naturalmente em manager/service existente
+- não há ganho claro de coesão ou testabilidade
+- seria apenas extração prematura sem benefício arquitetural
+
 ---
 
 # Convenções
@@ -140,6 +162,9 @@ src/api_bootstrapper_cli/
 - Preferir ferramentas built-in do Python quando possível, evitando dependências desnecessárias
 - Logger centralizado em `core/logger.py` para mensagens consistentes
 - Docstrings e comentários apenas quando realmente necessários e relevantes: preferir nomes descritivos que tornem o código auto-explicativo ao invés de adicionar documentação desnecessária
+- Mensagens de commit devem seguir Conventional Commits, estar em inglês, ser concisas e preferencialmente ter frases únicas (evitar duplicação e verbosidade)
+- Commits devem agrupar código do mesmo contexto com suas dependências e testes correspondentes (commits atômicos e completos)
+- Commits devem ser cadenciados e frequentes, seguindo práticas de Extreme Programming e Manifesto Ágil: integrar código continuamente ao invés de acumular mudanças grandes, mantendo o código sempre em estado funcional e integrável
 
 ---
 
@@ -172,25 +197,18 @@ src/api_bootstrapper_cli/
 Preferir separar as etapas com linhas em branco em vez de comentários explícitos:
 
 ```python
-# Arrange
-...
+# Arrange: preparar dados e dependências
+manager = SomeManager()
+data = {"key": "value"}
 
-# Act
-...
+# Act: executar operação
+result = manager.process(data)
 
-# Assert
-...
+# Assert: validar resultado
+assert result.success is True
+assert result.data == expected_data
 ```
 
-ou:
-
-```python
-...
-
-result = service.run()
-
-assert result == expected
-```
 - Priorizar testes unitários para managers, funções puras e regras de negócio
 - Usar testes de integração para fluxos que dependem de filesystem, shell ou ferramentas externas
 - Commands CLI devem ser testados principalmente pela orquestração, e não pela lógica de negócio
