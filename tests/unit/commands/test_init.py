@@ -107,13 +107,17 @@ def test_should_show_progress_steps(
     )
     output = strip_ansi_codes(result.stdout)
 
-    assert "Step 1/4" in output
+    assert "Step 1/6" in output
+    assert "Creating project structure" in output
+    assert "Step 2/6" in output
     assert "Setting up Python environment" in output
-    assert "Step 2/4" in output
+    assert "Step 3/6" in output
+    assert "Creating Dockerfile" in output
+    assert "Step 4/6" in output
     assert "Setting up environment file" in output
-    assert "Step 3/4" in output
+    assert "Step 5/6" in output
     assert "Checking .gitignore" in output
-    assert "Step 4/4" in output
+    assert "Step 6/6" in output
     assert "Configuring pre-commit hooks" in output
 
 

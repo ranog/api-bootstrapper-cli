@@ -1,5 +1,3 @@
-"""Command to initialize a complete Python project with all features."""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -9,7 +7,12 @@ from rich.console import Console
 
 from api_bootstrapper_cli.commands.add_pre_commit import add_pre_commit
 from api_bootstrapper_cli.commands.bootstrap_env import ManagerChoice, bootstrap_env
-from api_bootstrapper_cli.core.files import create_env_example, update_gitignore
+from api_bootstrapper_cli.core.files import (
+    create_dockerfile,
+    create_env_example,
+    create_project_structure,
+    update_gitignore,
+)
 from api_bootstrapper_cli.core.shell import ShellError
 
 
@@ -67,23 +70,31 @@ def init(
     console.print("\n[bold cyan]🚀 Initializing Python project...[/bold cyan]\n")
 
     try:
-        console.print("[bold]Step 1/4:[/bold] Setting up Python environment")
+        console.print("[bold]Step 1/6:[/bold] Creating project structure")
+        create_project_structure(path)
+        console.print("  ✓ Created src/ and tests/ directories")
+
+        console.print("\n[bold]Step 2/6:[/bold] Setting up Python environment")
         bootstrap_env(
             python_version=python, path=path, install=install, manager=manager
         )
 
-        console.print("\n[bold]Step 2/4:[/bold] Setting up environment file")
+        console.print("\n[bold]Step 3/6:[/bold] Creating Dockerfile")
+        create_dockerfile(path, python_version=python)
+        console.print("  ✓ Created Dockerfile")
+
+        console.print("\n[bold]Step 4/6:[/bold] Setting up environment file")
         create_env_example(path)
         console.print("  ✓ Environment configuration ready")
 
-        console.print("\n[bold]Step 3/4:[/bold] Checking .gitignore")
+        console.print("\n[bold]Step 5/6:[/bold] Checking .gitignore")
         update_gitignore(path)
         if (path / ".gitignore").exists():
             console.print("  ✓ Updated .gitignore to exclude .env files")
         else:
             console.print("  ℹ .gitignore not found (skipped)")
 
-        console.print("\n[bold]Step 4/4:[/bold] Configuring pre-commit hooks")
+        console.print("\n[bold]Step 6/6:[/bold] Configuring pre-commit hooks")
         add_pre_commit(path=path, manager=manager)
 
         console.print(

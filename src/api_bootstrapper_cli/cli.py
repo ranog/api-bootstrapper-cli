@@ -1,6 +1,7 @@
 import typer
 
 from api_bootstrapper_cli.commands.add_alembic import add_alembic
+from api_bootstrapper_cli.commands.add_docker import add_docker
 from api_bootstrapper_cli.commands.add_pre_commit import add_pre_commit
 from api_bootstrapper_cli.commands.bootstrap_env import bootstrap_env
 from api_bootstrapper_cli.commands.init import init
@@ -45,6 +46,7 @@ app.add_typer(db_app, name="db")
 app.command("init")(init)
 app.command("bootstrap-env")(bootstrap_env)
 app.command("add-alembic")(add_alembic)
+app.command("add-docker")(add_docker)
 app.command("add-pre-commit")(add_pre_commit)
 
 

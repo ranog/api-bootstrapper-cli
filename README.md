@@ -14,8 +14,10 @@ Automates the setup of **pyenv + Poetry** or **uv**, plus **VSCode** configurati
 
 - 🐍 **Python Version Management** - Automatic installation and configuration via pyenv or uv
 - 📦 **Dependency Management** - Poetry or uv setup with in-project virtualenv
+- 📁 **Project Structure** - Automatic creation of `src/` and `tests/` directories
 - 🔧 **VSCode Integration** - Auto-generated settings for Python interpreter and testing
 - 🪝 **Pre-commit Hooks** - Automated setup with Ruff and Commitizen
+- 🐳 **Docker Support** - Production-ready Dockerfile with multi-stage builds
 - � **Environment Variables** - Creates `.env.example` template with `PYTHONDONTWRITEBYTECODE=1`
 - �🚀 **Smart Detection** - Skips setup if environment already exists
 - 🎯 **Zero Configuration** - Creates minimal `pyproject.toml` if missing
@@ -93,7 +95,7 @@ source ~/.bashrc  # or ~/.zshrc
 
 Now you can use tab completion:
 ```bash
-api-bootstrapper <TAB>           # Shows: init, bootstrap-env, add-alembic, add-pre-commit
+api-bootstrapper <TAB>           # Shows: init, bootstrap-env, add-alembic, add-docker, add-pre-commit
 api-bootstrapper bootstrap-env --<TAB>  # Shows: --path, --python, --install
 ```
 
@@ -238,12 +240,14 @@ api-bootstrapper init --python 3.12.12 --no-install
 
 **What it does:**
 
-1. ✅ Sets up Python environment (pyenv or uv + VSCode)
-2. ✅ Creates `.env.example` with `PYTHONDONTWRITEBYTECODE=1`
-3. ✅ Updates `.gitignore` to exclude `.env` files (if `.gitignore` exists)
-4. ✅ Installs pre-commit, ruff, and commitizen dependencies
-5. ✅ Configures pre-commit hooks
-6. ✅ Shows clear next steps
+1. ✅ Creates `src/` and `tests/` directories with `__init__.py` files
+2. ✅ Sets up Python environment (pyenv or uv + VSCode)
+3. ✅ Creates `Dockerfile` with matching Python version
+4. ✅ Creates `.env.example` with `PYTHONDONTWRITEBYTECODE=1`
+5. ✅ Updates `.gitignore` to exclude `.env` files (if `.gitignore` exists)
+6. ✅ Installs pre-commit, ruff, and commitizen dependencies
+7. ✅ Configures pre-commit hooks
+8. ✅ Shows clear next steps
 
 **This is the recommended command for new projects!**
 
@@ -367,6 +371,70 @@ git commit -m "fix: correct bug"  # ✓ Valid conventional commit
 
 ---
 
+### add-docker
+
+Adds a production-ready Dockerfile to your Python project.
+
+Creates a multi-stage Docker image optimized for Python applications using uvicorn.
+
+**Basic usage:**
+
+```bash
+# Add Dockerfile with default Python 3.13
+api-bootstrapper add-docker
+
+# Add Dockerfile with specific Python version
+api-bootstrapper add-docker --python 3.12
+
+# Add Dockerfile to specific project
+api-bootstrapper add-docker --path ./my-project --python 3.13
+```
+
+**What it does:**
+
+1. ✅ Creates `Dockerfile` with multi-stage build
+2. ✅ Uses Python slim image for smaller size
+3. ✅ Configures uvicorn to run FastAPI app on port 8080
+4. ✅ Optimizes for production with proper dependency caching
+
+**Generated Dockerfile features:**
+- **Multi-stage build** - Separates build dependencies from runtime
+- **Virtual environment** - Uses `/opt/venv` for isolated dependencies
+- **Minimal size** - Based on `python:X.Y-slim` image
+- **FastAPI ready** - Configured for `src.main:app` with uvicorn
+
+**Example workflow:**
+
+```bash
+# After running add-docker
+echo "fastapi==0.104.1" > requirements.txt
+echo "uvicorn[standard]==0.24.0" >> requirements.txt
+
+# Create your FastAPI app
+mkdir -p src
+cat > src/main.py << 'EOF'
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}
+EOF
+
+# Build and run
+docker build -t my-api .
+docker run -p 8080:8080 my-api
+
+# Access at http://localhost:8080
+```
+
+**Requires:**
+- `requirements.txt` with dependencies
+- `src/main.py` with FastAPI app
+
+---
+
 ## 📁 Project Structure
 
 After running `init` or `bootstrap-env`, your project will have:
@@ -381,6 +449,11 @@ my-project/
 ├── .venv/                   # Virtual environment
 ├── .vscode/
 │   └── settings.json        # VSCode Python configuration
+├── Dockerfile               # Docker configuration (created by init)
+├── src/                     # Source code directory (created by init)
+│   └── __init__.py
+├── tests/                   # Tests directory (created by init)
+│   └── __init__.py
 └── pyproject.toml           # Project configuration (format depends on --manager)
 ```
 
@@ -444,6 +517,65 @@ dependencies = []
 - Poetry backend uses `[tool.poetry]` section with caret constraint (`^X.Y`)
 - uv backend uses `[project]` section (PEP 621) with floor constraint (`>=X.Y`)
 - Neither file is ever overwritten if `pyproject.toml` already exists
+
+### Generated Dockerfile
+
+The `init` command (and `add-docker` command) creates a production-ready multi-stage Dockerfile:
+
+```dockerfile
+# Build stage
+FROM python:3.12-slim as builder
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy project files
+COPY pyproject.toml ./
+COPY src/ ./src/
+
+# Install dependencies
+RUN pip install --no-cache-dir .
+
+# Runtime stage
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Copy installed packages from builder
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy application code
+COPY src/ ./src/
+
+# Run as non-root user
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+USER appuser
+
+# Health check (uncomment when you have a health endpoint)
+# HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+#   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+
+EXPOSE 8000
+
+CMD ["python", "-m", "src.main"]
+```
+
+**Key features:**
+- **Version matching:** Python version in Dockerfile automatically matches `--python` flag (e.g., `--python 3.12.12` → `python:3.12-slim`)
+- **Multi-stage build:** Separates build dependencies from runtime image (smaller final image)
+- **Non-root user:** Runs as `appuser` (UID 1000) for better security
+- **Optimized layers:** Dependencies installed before app code for better caching
+- **Health check template:** Commented example ready to uncomment when needed
+
+**Version extraction:**
+- Full version `3.12.12` → Docker tag `3.12`
+- Full version `3.11.5` → Docker tag `3.11`
+- Ensures consistency between `.python-version`, `pyproject.toml`, and `Dockerfile`
 
 ---
 
@@ -729,7 +861,9 @@ api-bootstrapper bootstrap-env --python <version> --path . --manager uv
 - ✅ `bootstrap-env` - pyenv + Poetry + VSCode
 - ✅ `bootstrap-env --manager uv` - uv + VSCode
 - ✅ `add-pre-commit` - Git hooks with Ruff and Commitizen
+- ✅ `add-docker` - Dockerfile for Python applications
 - ✅ Environment variables - `.env.example` template with `PYTHONDONTWRITEBYTECODE=1`
+- ✅ Project structure - `src/` and `tests/` directories
 - ⬜ `add-alembic` - Database migrations
 - ⬜ `add-docker-postgres` - Local database
 - ⬜ `add-mypy` - Type checking

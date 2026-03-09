@@ -199,3 +199,80 @@ def update_gitignore(project_root: Path) -> None:
             content + separator + "\n" + "\n".join(sorted(missing_patterns)) + "\n"
         )
         write_text(gitignore_path, new_content, overwrite=True)
+
+
+def create_project_structure(project_root: Path) -> None:
+    """Create src/ and tests/ directories with __init__.py files.
+
+    Logic:
+    - Creates src/ directory if it doesn't exist
+    - Creates src/__init__.py if it doesn't exist
+    - Creates tests/ directory if it doesn't exist
+    - Creates tests/__init__.py if it doesn't exist
+
+    Args:
+        project_root: Root directory of the project.
+    """
+    # Create src/ directory and __init__.py
+    src_dir = project_root / "src"
+    ensure_dir(src_dir)
+
+    src_init = src_dir / "__init__.py"
+    if not src_init.exists():
+        write_text(src_init, "")
+
+    # Create tests/ directory and __init__.py
+    tests_dir = project_root / "tests"
+    ensure_dir(tests_dir)
+
+    tests_init = tests_dir / "__init__.py"
+    if not tests_init.exists():
+        write_text(tests_init, "")
+
+
+def create_dockerfile(project_root: Path, python_version: str = "3.13") -> Path:
+    """Create a Dockerfile for a Python application.
+
+    Args:
+        project_root: Root directory of the project.
+        python_version: Python version for the base image (e.g., "3.13", "3.12.12").
+                       If a full version is provided (e.g., "3.12.12"),
+                       only major.minor will be used (e.g., "3.12").
+
+    Returns:
+        Path to the created Dockerfile.
+    """
+    dockerfile_path = project_root / "Dockerfile"
+
+    if dockerfile_path.exists():
+        return dockerfile_path
+
+    # Extract major.minor from version (e.g., "3.12.12" -> "3.12")
+    version_parts = python_version.split(".")
+    major_minor = f"{version_parts[0]}.{version_parts[1]}"
+
+    content = f"""FROM python:{major_minor}-slim as builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \\
+\tbuild-essential && \\
+    rm -rf /var/lib/apt/lists/*
+
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+FROM python:{major_minor}-slim
+
+WORKDIR /app
+ENV PATH="/opt/venv/bin:$PATH"
+
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8080"]
+
+COPY --from=builder /opt/venv /opt/venv
+COPY ./src ./src
+"""
+
+    write_text(dockerfile_path, content)
+    return dockerfile_path

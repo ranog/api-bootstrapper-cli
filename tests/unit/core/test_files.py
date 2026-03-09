@@ -5,8 +5,10 @@ from pathlib import Path
 import pytest
 
 from api_bootstrapper_cli.core.files import (
+    create_dockerfile,
     create_env_example,
     create_minimal_pyproject,
+    create_project_structure,
     ensure_dir,
     read_text,
     update_gitignore,
@@ -313,3 +315,88 @@ def test_update_gitignore_should_not_duplicate_env_patterns(tmp_path: Path):
     assert content.count(".env\n") == 1
     assert content.count(".env.local\n") == 1
     assert content.count("!.env.example\n") == 1
+
+
+def test_create_project_structure_should_create_directories(tmp_path: Path):
+    create_project_structure(tmp_path)
+
+    src_dir = tmp_path / "src"
+    tests_dir = tmp_path / "tests"
+
+    assert src_dir.exists()
+    assert src_dir.is_dir()
+    assert tests_dir.exists()
+    assert tests_dir.is_dir()
+
+
+def test_create_project_structure_should_create_init_files(tmp_path: Path):
+    create_project_structure(tmp_path)
+
+    src_init = tmp_path / "src" / "__init__.py"
+    tests_init = tmp_path / "tests" / "__init__.py"
+
+    assert src_init.exists()
+    assert tests_init.exists()
+    assert src_init.read_text() == ""
+    assert tests_init.read_text() == ""
+
+
+def test_create_project_structure_should_not_overwrite_existing_init(tmp_path: Path):
+    src_dir = tmp_path / "src"
+    src_dir.mkdir()
+    src_init = src_dir / "__init__.py"
+    src_init.write_text("# Existing content")
+
+    create_project_structure(tmp_path)
+
+    assert src_init.read_text() == "# Existing content"
+
+
+def test_create_dockerfile_should_create_file(tmp_path: Path):
+    result = create_dockerfile(tmp_path, python_version="3.13")
+
+    assert result == tmp_path / "Dockerfile"
+    assert result.exists()
+
+    content = result.read_text()
+    assert "FROM python:3.13-slim as builder" in content
+    assert "uvicorn" in content
+    assert "src.main:app" in content
+    assert "COPY ./src ./src" in content
+
+
+def test_create_dockerfile_should_use_custom_python_version(tmp_path: Path):
+    result = create_dockerfile(tmp_path, python_version="3.12")
+
+    content = result.read_text()
+    assert "FROM python:3.12-slim as builder" in content
+    assert "FROM python:3.12-slim" in content
+
+
+def test_create_dockerfile_should_extract_major_minor_from_full_version(tmp_path: Path):
+    result = create_dockerfile(tmp_path, python_version="3.12.12")
+
+    content = result.read_text()
+    assert "FROM python:3.12-slim as builder" in content
+    assert "FROM python:3.12-slim" in content
+    # Should not include patch version
+    assert "3.12.12" not in content
+
+
+def test_create_dockerfile_should_handle_version_with_two_parts(tmp_path: Path):
+    result = create_dockerfile(tmp_path, python_version="3.13")
+
+    content = result.read_text()
+    assert "FROM python:3.13-slim as builder" in content
+    assert "FROM python:3.13-slim" in content
+
+
+def test_create_dockerfile_should_not_overwrite_existing(tmp_path: Path):
+    dockerfile = tmp_path / "Dockerfile"
+    original_content = "FROM ubuntu:latest\n"
+    dockerfile.write_text(original_content)
+
+    result = create_dockerfile(tmp_path)
+
+    assert result == dockerfile
+    assert result.read_text() == original_content
