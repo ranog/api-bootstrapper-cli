@@ -181,6 +181,9 @@ warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 show_error_codes = true
+namespace_packages = true
+explicit_package_bases = true
+mypy_path = "src"
 exclude = [
     "^build/",
     "^dist/",
