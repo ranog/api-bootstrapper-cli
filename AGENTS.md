@@ -189,6 +189,7 @@ src/api_bootstrapper_cli/
 - Seguir a pirâmide de testes: mais testes unitários, menos testes de integração e end-to-end
 - Sempre que criar ou alterar regra de negócio, sugerir testes
 - Usar `pytest`
+- Nomes de testes devem seguir o padrão `test_should_*` para expressar comportamento esperado (ex: `test_should_create_venv_when_missing`, `test_should_raise_error_when_path_invalid`)
 - Evitar mocks desnecessários
 - Sugerir libs de teste para cenários mais perto do mundo real (ex: pytest-mock, pytest-asyncio, testcontainers, etc...), ao invés de mocks manuais
 - Priorizar testes de comportamento sobre testes de implementação
