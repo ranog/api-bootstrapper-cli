@@ -67,6 +67,9 @@ class MockDependencyManager:
     def ensure_venv(self, path: Path) -> None:
         pass
 
+    def add_dependency(self, path: Path, dependency: str) -> None:
+        pass
+
     def install_dependencies(self, path: Path) -> None:
         pass
 
@@ -126,6 +129,54 @@ def test_should_return_existing_environment_when_already_configured(
     messages = [msg for level, msg in logger.messages]
     assert "environment already configured" in messages
     assert "environment ready" in messages
+
+
+def test_should_return_existing_environment_when_already_configured_on_windows(
+    tmp_path: Path, mocker
+):
+    venv_path = tmp_path / ".venv"
+    venv_path.mkdir()
+    (venv_path / "Scripts").mkdir(parents=True)
+    (venv_path / "Scripts" / "python.exe").touch()
+
+    pyproject_path = tmp_path / "pyproject.toml"
+    pyproject_path.write_text('[tool.poetry]\nname = "test"\nversion = "1.0.0"')
+
+    python_version_file = tmp_path / ".python-version"
+    python_version_file.write_text("3.12.3")
+
+    vscode_dir = tmp_path / ".vscode"
+    vscode_dir.mkdir()
+    (vscode_dir / "settings.json").touch()
+
+    logger = MockLogger()
+    python_env = MockPythonEnvManager()
+    ensure_python_spy = mocker.spy(python_env, "ensure_python")
+
+    service = EnvironmentBootstrapService(
+        python_env_manager=python_env,
+        dependency_manager=MockDependencyManager(),
+        editor_writer=MockEditorWriter(),
+        logger=logger,
+    )
+
+    mock_completed = subprocess.CompletedProcess(
+        args=[], returncode=0, stdout="Python 3.12.3\n", stderr=""
+    )
+    with (
+        patch(
+            "api_bootstrapper_cli.core.environment_service.platform.system",
+            return_value="Windows",
+        ),
+        patch(
+            "api_bootstrapper_cli.core.environment_service.subprocess.run",
+            return_value=mock_completed,
+        ),
+    ):
+        result = service.bootstrap(tmp_path, "3.12.3", install_dependencies=False)
+
+    ensure_python_spy.assert_not_called()
+    assert result.python_version == "3.12.3"
 
 
 def test_should_recreate_environment_when_python_version_mismatches(
@@ -207,6 +258,7 @@ def test_should_create_environment_when_pyproject_is_missing(tmp_path: Path, moc
     editor = MockEditorWriter()
 
     ensure_python_spy = mocker.spy(python_env, "ensure_python")
+    add_dependency_spy = mocker.spy(deps, "add_dependency")
 
     service = EnvironmentBootstrapService(
         python_env_manager=python_env,
@@ -218,6 +270,7 @@ def test_should_create_environment_when_pyproject_is_missing(tmp_path: Path, moc
     result = service.bootstrap(tmp_path, "3.12.3", install_dependencies=True)
 
     ensure_python_spy.assert_called_once_with("3.12.3")
+    add_dependency_spy.assert_called_once_with(tmp_path, "uvicorn")
     assert result.python_version == "3.12.3"
 
 
@@ -249,6 +302,28 @@ def test_should_create_environment_when_python_version_file_is_missing(
     result = service.bootstrap(tmp_path, "3.12.3", install_dependencies=True)
 
     ensure_python_spy.assert_called_once_with("3.12.3")
+    assert result.python_version == "3.12.3"
+
+
+def test_should_not_add_runtime_dependency_when_install_is_disabled(
+    tmp_path: Path, mocker
+):
+    logger = MockLogger()
+    python_env = MockPythonEnvManager()
+    deps = MockDependencyManager()
+
+    add_dependency_spy = mocker.spy(deps, "add_dependency")
+
+    service = EnvironmentBootstrapService(
+        python_env_manager=python_env,
+        dependency_manager=deps,
+        editor_writer=MockEditorWriter(),
+        logger=logger,
+    )
+
+    result = service.bootstrap(tmp_path, "3.12.3", install_dependencies=False)
+
+    add_dependency_spy.assert_not_called()
     assert result.python_version == "3.12.3"
 
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import platform
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -53,13 +54,16 @@ class EnvironmentBootstrapService:
 
         python_path = self._setup_python_environment(project_root, python_version)
         self._install_python_dependencies(python_version)
-        self._ensure_pyproject_exists(project_root, python_version)
+        created_minimal_pyproject = self._ensure_pyproject_exists(
+            project_root, python_version
+        )
 
         result = self._setup_dependency_environment(
             project_root,
             python_path,
             python_version,
             install_dependencies,
+            created_minimal_pyproject,
         )
 
         return result
@@ -93,7 +97,7 @@ class EnvironmentBootstrapService:
         except Exception:
             return False
 
-        venv_python = venv_path / "bin" / "python"
+        venv_python = self._get_venv_python_path(venv_path)
         if not venv_python.exists():
             return False
 
@@ -117,6 +121,11 @@ class EnvironmentBootstrapService:
             return False
 
         return True
+
+    def _get_venv_python_path(self, venv_path: Path) -> Path:
+        if platform.system() == "Windows":
+            return venv_path / "Scripts" / "python.exe"
+        return venv_path / "bin" / "python"
 
     def _get_existing_environment_result(
         self,
@@ -147,7 +156,7 @@ class EnvironmentBootstrapService:
         self._logger.info(f"[bold][env] Setting up Python {python_version}[/bold]")
         self._python_env.ensure_python(python_version)
 
-        self._logger.info("[env] Configuring pyenv local version")
+        self._logger.info("[env] Configuring local Python version")
         self._python_env.set_local(project_root, python_version)
 
         python_path = self._python_env.get_python_path(python_version)
@@ -163,7 +172,7 @@ class EnvironmentBootstrapService:
         )
         self._logger.success("[env] Python tooling installed")
 
-    def _ensure_pyproject_exists(self, project_root: Path, python_version: str) -> None:
+    def _ensure_pyproject_exists(self, project_root: Path, python_version: str) -> bool:
         dep_mgr = getattr(self._deps, "name", "deps")
         use_pep621 = dep_mgr == "uv"
         pyproject_path = project_root / "pyproject.toml"
@@ -176,6 +185,7 @@ class EnvironmentBootstrapService:
                 use_pep621=use_pep621,
             )
             self._logger.success(f"[{dep_mgr}] Created {pyproject_path}")
+            return True
         else:
             updated = files.update_python_constraint(pyproject_path, python_version)
             if updated:
@@ -197,6 +207,7 @@ class EnvironmentBootstrapService:
                             f"[{dep_mgr}] Could not remove {lock_file_name}: {e}. "
                             "Remove it manually before proceeding."
                         )
+        return False
 
     def _setup_dependency_environment(
         self,
@@ -204,6 +215,7 @@ class EnvironmentBootstrapService:
         python_path: Path,
         python_version: str,
         install_dependencies: bool,
+        created_minimal_pyproject: bool,
     ) -> EnvironmentSetupResult:
         dep_mgr = getattr(self._deps, "name", "deps")
         self._logger.info(f"[bold][{dep_mgr}] Configuring {dep_mgr} environment[/bold]")
@@ -211,6 +223,10 @@ class EnvironmentBootstrapService:
 
         self._logger.info(f"[{dep_mgr}] Linking to Python version")
         self._deps.use_python(project_root, python_path)
+
+        if created_minimal_pyproject and install_dependencies:
+            self._logger.info(f"[{dep_mgr}] Adding default runtime dependency: uvicorn")
+            self._deps.add_dependency(project_root, "uvicorn")
 
         venv_path_dir = self._deps.get_venv_path(project_root)
         if not venv_path_dir.exists():

@@ -63,6 +63,10 @@ class DependencyManager(Protocol):
         """Ensure virtual environment exists without a full dependency install."""
         ...
 
+    def add_dependency(self, project_root: Path, dependency: str) -> None:
+        """Add a dependency and let the manager resolve/persist its version."""
+        ...
+
     def install_dependencies(self, project_root: Path) -> None:
         """Install the project's dependencies."""
         ...

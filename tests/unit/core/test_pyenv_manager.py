@@ -32,6 +32,15 @@ def test_should_detect_pyenv_is_not_installed(mocker):
     assert manager.is_installed() is False
 
 
+def test_should_detect_pyenv_is_not_installed_when_file_not_found(mocker):
+    mock_exec = mocker.patch("api_bootstrapper_cli.core.pyenv_manager.exec_cmd")
+    mock_exec.side_effect = FileNotFoundError("pyenv not found")
+
+    manager = PyenvManager()
+
+    assert manager.is_installed() is False
+
+
 def test_should_list_installed_versions(mocker):
     mock_exec = mocker.patch("api_bootstrapper_cli.core.pyenv_manager.exec_cmd")
     mock_exec.return_value = CommandResult(

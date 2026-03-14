@@ -31,7 +31,7 @@ class PyenvManager:
         try:
             exec_cmd(["pyenv", "--version"], check=True, env=self._get_clean_env())
             return True
-        except ShellError:
+        except (ShellError, FileNotFoundError):
             return False
 
     def ensure_python(self, version: str) -> None:

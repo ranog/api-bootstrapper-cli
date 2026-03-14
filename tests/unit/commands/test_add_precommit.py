@@ -190,6 +190,31 @@ def test_should_show_warning_without_git(tmp_path: Path):
         assert "poetry run pre-commit install" in output
 
 
+def test_should_show_uv_instruction_without_git_when_manager_is_uv(tmp_path: Path):
+    with patch(
+        "api_bootstrapper_cli.commands.add_pre_commit.PreCommitManager"
+    ) as mock_manager:
+        mock_instance = MagicMock()
+        config_path = tmp_path / ".pre-commit-config.yaml"
+        config_path.touch()
+        mock_instance.create_config.return_value = (
+            config_path,
+            {"ruff": "0.15.1"},
+            False,
+        )
+        mock_manager.return_value = mock_instance
+
+        result = runner.invoke(
+            app, ["add-pre-commit", "--path", str(tmp_path), "--manager", "uv"]
+        )
+        output = strip_ansi_codes(text=result.stdout)
+
+        assert result.exit_code == 0
+        assert "Not a git repository" in output
+        assert "uv run pre-commit install" in output
+        assert "poetry run pre-commit install" not in output
+
+
 def test_should_handle_value_error(tmp_path: Path):
     with patch(
         "api_bootstrapper_cli.commands.add_pre_commit.PreCommitManager"

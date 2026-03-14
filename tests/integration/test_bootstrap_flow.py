@@ -137,8 +137,7 @@ def test_should_handle_poetry_not_installed(mocker):
 
     poetry = PoetryManager()
 
-    with pytest.raises(FileNotFoundError):
-        poetry.is_installed()
+    assert poetry.is_installed() is False
 
 
 @pytest.mark.integration
@@ -148,5 +147,4 @@ def test_should_handle_pyenv_not_installed(mocker):
 
     pyenv = PyenvManager()
 
-    with pytest.raises(FileNotFoundError):
-        pyenv.is_installed()
+    assert pyenv.is_installed() is False

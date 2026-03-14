@@ -7,11 +7,13 @@ from __future__ import annotations
 
 import os
 import platform
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from rich.console import Console
 
+from api_bootstrapper_cli.core.files import read_text
 from api_bootstrapper_cli.core.shell import ShellError, exec_cmd
 
 
@@ -82,6 +84,28 @@ class UvDependencyManager:
             )
         except ShellError as e:
             raise RuntimeError(f"[uv] Falha ao criar virtualenv: {e}") from e
+
+    def add_dependency(self, project_root: Path, dependency: str) -> None:
+        pyproject_path = project_root / "pyproject.toml"
+        if not pyproject_path.exists():
+            raise FileNotFoundError(f"pyproject.toml not found in {project_root}")
+
+        content = read_text(pyproject_path)
+        dependency_pattern = rf'["\']{re.escape(dependency)}([<>=!~][^"\']*)?["\']'
+        if re.search(dependency_pattern, content):
+            return
+
+        try:
+            exec_cmd(
+                ["uv", "add", dependency],
+                cwd=str(project_root),
+                check=True,
+                env=self._get_clean_env(),
+            )
+        except ShellError as e:
+            raise RuntimeError(
+                f"[uv] Falha ao adicionar dependência {dependency}: {e}"
+            ) from e
 
     def install_dependencies(self, project_root: Path) -> None:
         """Sync project dependencies with ``uv sync --all-groups``.

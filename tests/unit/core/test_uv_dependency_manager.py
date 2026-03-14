@@ -133,3 +133,44 @@ def test_should_return_venv_python_on_windows(mocker, tmp_path):
 
 def test_manager_name_is_uv():
     assert UvDependencyManager().name == "uv"
+
+
+def test_should_add_dependency_with_uv_when_missing(mocker, tmp_path):
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text(
+        """[project]
+name = "test"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = []
+"""
+    )
+    mock_exec = mocker.patch("api_bootstrapper_cli.core.uv_dependency_manager.exec_cmd")
+    mock_exec.return_value = CommandResult(stdout="", stderr="", returncode=0)
+
+    manager = UvDependencyManager()
+    manager.add_dependency(tmp_path, "uvicorn")
+
+    mock_exec.assert_called_once()
+    call_args = mock_exec.call_args
+    assert call_args[0][0] == ["uv", "add", "uvicorn"]
+    assert call_args[1]["cwd"] == str(tmp_path)
+    assert call_args[1]["check"] is True
+
+
+def test_should_skip_uv_add_when_dependency_already_declared(mocker, tmp_path):
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text(
+        """[project]
+name = "test"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = ["uvicorn>=0.38.0,<0.39"]
+"""
+    )
+    mock_exec = mocker.patch("api_bootstrapper_cli.core.uv_dependency_manager.exec_cmd")
+    manager = UvDependencyManager()
+
+    manager.add_dependency(tmp_path, "uvicorn")
+
+    mock_exec.assert_not_called()

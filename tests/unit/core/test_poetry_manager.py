@@ -28,6 +28,19 @@ def test_should_verify_poetry_is_installed(mocker):
     assert call_args[1]["check"] is True
 
 
+def test_should_return_false_when_poetry_command_not_found(mocker):
+    mocker.patch(
+        "api_bootstrapper_cli.core.poetry_manager.PoetryManager._get_poetry_cmd",
+        return_value="poetry",
+    )
+    mock_exec = mocker.patch("api_bootstrapper_cli.core.poetry_manager.exec_cmd")
+    mock_exec.side_effect = FileNotFoundError("poetry command not found")
+
+    manager = PoetryManager()
+
+    assert manager.is_installed() is False
+
+
 def test_should_configure_in_project_venv(mocker, tmp_path: Path):
     mocker.patch(
         "api_bootstrapper_cli.core.poetry_manager.PoetryManager._get_poetry_cmd",
@@ -243,3 +256,51 @@ def test_ensure_venv_raises_runtime_error_when_creation_fails(mocker, tmp_path: 
 
     with pytest.raises(RuntimeError, match=r"\[poetry\].*Falha ao criar virtualenv"):
         manager.ensure_venv(tmp_path)
+
+
+def test_should_add_dependency_with_poetry_when_missing(mocker, tmp_path: Path):
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text(
+        """[tool.poetry]
+name = "test"
+version = "0.1.0"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+"""
+    )
+    mocker.patch(
+        "api_bootstrapper_cli.core.poetry_manager.PoetryManager._get_poetry_cmd",
+        return_value="poetry",
+    )
+    mock_exec = mocker.patch("api_bootstrapper_cli.core.poetry_manager.exec_cmd")
+    mock_exec.return_value = CommandResult(stdout="", stderr="", returncode=0)
+
+    manager = PoetryManager()
+    manager.add_dependency(tmp_path, "uvicorn")
+
+    mock_exec.assert_called_once()
+    call_args = mock_exec.call_args
+    assert call_args[0][0] == ["poetry", "add", "uvicorn"]
+    assert call_args[1]["cwd"] == str(tmp_path)
+    assert call_args[1]["check"] is True
+
+
+def test_should_skip_add_dependency_when_already_declared(mocker, tmp_path: Path):
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text(
+        """[tool.poetry]
+name = "test"
+version = "0.1.0"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+uvicorn = "^0.38.0"
+"""
+    )
+    mock_exec = mocker.patch("api_bootstrapper_cli.core.poetry_manager.exec_cmd")
+    manager = PoetryManager()
+
+    manager.add_dependency(tmp_path, "uvicorn")
+
+    mock_exec.assert_not_called()

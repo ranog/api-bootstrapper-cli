@@ -100,7 +100,22 @@ def test_should_create_minimal_pyproject_toml(tmp_path: Path):
     assert 'version = "0.1.0"' in content
     assert "authors = []" in content
     assert 'python = "^3.12"' in content
+    assert "uvicorn" not in content
     assert "[build-system]" in content
+
+
+def test_should_create_minimal_pep621_pyproject_without_dependencies(tmp_path: Path):
+    result = create_minimal_pyproject(
+        tmp_path, python_version="3.12.12", use_pep621=True
+    )
+
+    assert result == tmp_path / "pyproject.toml"
+    assert result.exists()
+
+    content = result.read_text()
+    assert "[project]" in content
+    assert 'requires-python = ">=3.12"' in content
+    assert "dependencies = []" in content
 
 
 def test_should_use_custom_project_name_in_pyproject(tmp_path: Path):

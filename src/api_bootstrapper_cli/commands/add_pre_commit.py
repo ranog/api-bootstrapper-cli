@@ -36,6 +36,7 @@ def add_pre_commit(
         config_path, versions, config_already_existed = manager_instance.create_config(
             project_root, manager
         )
+        selected_manager = manager or manager_instance._detect_manager(project_root)
 
         console.print()
         if config_already_existed:
@@ -71,9 +72,12 @@ def add_pre_commit(
         else:
             console.print("[yellow]⚠[/yellow] [dim]Not a git repository[/dim]")
             console.print("[dim]To enable hooks after git init, run:[/dim]")
-            console.print(
-                "  [cyan]poetry run pre-commit install --hook-type pre-commit --hook-type commit-msg[/cyan]"
+            install_cmd = (
+                "uv run pre-commit install --hook-type pre-commit --hook-type commit-msg"
+                if selected_manager == ManagerChoice.uv
+                else "poetry run pre-commit install --hook-type pre-commit --hook-type commit-msg"
             )
+            console.print(f"  [cyan]{install_cmd}[/cyan]")
 
         console.print()
 
