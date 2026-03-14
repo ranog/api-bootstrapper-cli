@@ -3,6 +3,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from api_bootstrapper_cli.core.protocols import ManagerChoice
+
 
 def ensure_dir(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
@@ -228,6 +230,101 @@ def create_project_structure(project_root: Path) -> None:
     tests_init = tests_dir / "__init__.py"
     if not tests_init.exists():
         write_text(tests_init, "")
+
+
+def create_makefile(
+    project_root: Path,
+    manager: ManagerChoice = ManagerChoice.pyenv,
+) -> Path:
+    """Create a Makefile tailored to the selected dependency manager."""
+    makefile_path = project_root / "Makefile"
+
+    if makefile_path.exists():
+        return makefile_path
+
+    image_name = _normalize_project_name(project_root.name)
+    container_name = image_name.replace("_", "-")
+
+    if manager == ManagerChoice.uv:
+        content = f"""\
+.PHONY: init install-deps run deps-export build-container run-container tests
+
+init: install-deps
+
+install-deps:
+\t@uv sync --all-groups
+\t@uv run pre-commit install --hook-type pre-commit --hook-type commit-msg
+\t@uv run pre-commit run --all-files
+
+run: init
+\t@uv run env $$(grep -v '^\\#' .env | xargs) uvicorn src.main:app --reload --port 8080
+
+deps-export:
+\t@uv export --all-groups --no-hashes -o requirements.txt
+
+build-container:
+\t@docker build \\
+\t\t--tag {image_name}:latest \\
+\t\t--build-arg GIT_HASH=$$(git rev-parse HEAD) \\
+\t\t-f Dockerfile \\
+\t\t.
+
+run-container: deps-export build-container
+\t@docker run --rm -it \\
+\t\t--name {container_name} \\
+\t\t--env-file .env \\
+\t\t--env PORT=8080 \\
+\t\t--publish 8080:8080 \\
+\t\t{image_name}:latest
+
+tests: init
+\t@uv run env $$(grep -v '^\\#' .env | xargs) pytest
+"""
+    else:
+        content = f"""\
+.PHONY: init install-deps run poetry-export build-container run-container tests
+
+init: install-deps
+
+install-deps:
+\t@pip install --upgrade pip setuptools wheel
+\t@pip install --upgrade poetry
+\t@poetry install --no-root
+\t@poetry run pre-commit install --hook-type pre-commit --hook-type commit-msg
+\t@poetry run pre-commit run --all-files
+
+run: init
+\t@poetry run env $$(grep -v '^\\#' .env | xargs) uvicorn src.main:app --reload --port 8080
+
+poetry-export:
+\t@poetry export --with dev -vv --no-ansi --no-interaction --without-hashes --format requirements.txt --output requirements.txt
+
+build-container:
+\t@docker build \\
+\t\t--tag {image_name}:latest \\
+\t\t--build-arg GIT_HASH=$$(git rev-parse HEAD) \\
+\t\t-f Dockerfile \\
+\t\t.
+
+run-container: poetry-export build-container
+\t@docker run --rm -it \\
+\t\t--name {container_name} \\
+\t\t--env-file .env \\
+\t\t--env PORT=8080 \\
+\t\t--publish 8080:8080 \\
+\t\t{image_name}:latest
+
+tests: init
+\t@poetry run env $$(grep -v '^\\#' .env | xargs) pytest
+"""
+
+    write_text(makefile_path, content)
+    return makefile_path
+
+
+def _normalize_project_name(project_name: str) -> str:
+    normalized = re.sub(r"[^a-zA-Z0-9_.-]+", "-", project_name).strip("-")
+    return normalized.lower() or "python-app"
 
 
 def create_dockerfile(project_root: Path, python_version: str = "3.13") -> Path:

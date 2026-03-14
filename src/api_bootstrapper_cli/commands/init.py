@@ -10,6 +10,7 @@ from api_bootstrapper_cli.commands.bootstrap_env import ManagerChoice, bootstrap
 from api_bootstrapper_cli.core.files import (
     create_dockerfile,
     create_env_example,
+    create_makefile,
     create_project_structure,
     update_gitignore,
 )
@@ -72,7 +73,8 @@ def init(
     try:
         console.print("[bold]Step 1/6:[/bold] Creating project structure")
         create_project_structure(path)
-        console.print("  ✓ Created src/ and tests/ directories")
+        create_makefile(path, manager=manager)
+        console.print("  ✓ Created src/, tests/, and Makefile")
 
         console.print("\n[bold]Step 2/6:[/bold] Setting up Python environment")
         bootstrap_env(

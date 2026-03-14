@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
 from typer.testing import CliRunner
 
 from api_bootstrapper_cli.cli import app
@@ -10,6 +11,17 @@ from tests.conftest import strip_ansi_codes
 
 
 runner = CliRunner()
+
+
+@pytest.fixture(autouse=True)
+def cleanup_generated_dockerfile():
+    dockerfile_path = Path.cwd() / "Dockerfile"
+    existed_before = dockerfile_path.exists()
+
+    yield
+
+    if not existed_before and dockerfile_path.exists():
+        dockerfile_path.unlink()
 
 
 def test_should_show_init_help():
@@ -95,6 +107,19 @@ def test_should_show_success_message(
     assert result.exit_code == 0
     assert "Project initialized successfully" in output
     assert "Next steps:" in output
+
+
+@patch("api_bootstrapper_cli.commands.init.bootstrap_env")
+@patch("api_bootstrapper_cli.commands.init.add_pre_commit")
+def test_should_create_makefile_during_init(
+    mock_pre_commit: MagicMock, mock_bootstrap: MagicMock, tmp_path: Path
+):
+    result = runner.invoke(
+        app, ["init", "--python", "3.12.12", "--path", str(tmp_path)]
+    )
+
+    assert result.exit_code == 0
+    assert (tmp_path / "Makefile").exists()
 
 
 @patch("api_bootstrapper_cli.commands.init.bootstrap_env")

@@ -7,6 +7,7 @@ import pytest
 from api_bootstrapper_cli.core.files import (
     create_dockerfile,
     create_env_example,
+    create_makefile,
     create_minimal_pyproject,
     create_project_structure,
     ensure_dir,
@@ -15,6 +16,7 @@ from api_bootstrapper_cli.core.files import (
     update_python_constraint,
     write_text,
 )
+from api_bootstrapper_cli.core.protocols import ManagerChoice
 
 
 def test_should_create_directory(tmp_path: Path):
@@ -414,4 +416,43 @@ def test_create_dockerfile_should_not_overwrite_existing(tmp_path: Path):
     result = create_dockerfile(tmp_path)
 
     assert result == dockerfile
+    assert result.read_text() == original_content
+
+
+def test_should_create_makefile_for_poetry_projects(tmp_path: Path):
+    result = create_makefile(tmp_path, manager=ManagerChoice.pyenv)
+
+    assert result == tmp_path / "Makefile"
+    assert result.exists()
+
+    content = result.read_text()
+    assert "init: install-deps" in content
+    assert "@poetry install --no-root" in content
+    assert "@poetry run pre-commit install" in content
+    assert "@poetry run env $$(grep -v '^\\#' .env | xargs) uvicorn" in content
+    assert "poetry-export:" in content
+
+
+def test_should_create_makefile_for_uv_projects(tmp_path: Path):
+    result = create_makefile(tmp_path, manager=ManagerChoice.uv)
+
+    assert result == tmp_path / "Makefile"
+    assert result.exists()
+
+    content = result.read_text()
+    assert "init: install-deps" in content
+    assert "@uv sync --all-groups" in content
+    assert "@uv run pre-commit install" in content
+    assert "@uv run env $$(grep -v '^\\#' .env | xargs) uvicorn" in content
+    assert "deps-export:" in content
+
+
+def test_should_not_overwrite_existing_makefile(tmp_path: Path):
+    makefile = tmp_path / "Makefile"
+    original_content = "all:\n\t@echo hello\n"
+    makefile.write_text(original_content)
+
+    result = create_makefile(tmp_path, manager=ManagerChoice.pyenv)
+
+    assert result == makefile
     assert result.read_text() == original_content
