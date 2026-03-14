@@ -374,7 +374,7 @@ def test_create_dockerfile_should_create_file(tmp_path: Path):
     assert result.exists()
 
     content = result.read_text()
-    assert "FROM python:3.13-slim as builder" in content
+    assert "FROM python:3.13-slim-bookworm as builder" in content
     assert "uvicorn" in content
     assert "src.main:app" in content
     assert "COPY ./src ./src" in content
@@ -384,16 +384,16 @@ def test_create_dockerfile_should_use_custom_python_version(tmp_path: Path):
     result = create_dockerfile(tmp_path, python_version="3.12")
 
     content = result.read_text()
-    assert "FROM python:3.12-slim as builder" in content
-    assert "FROM python:3.12-slim" in content
+    assert "FROM python:3.12-slim-bookworm as builder" in content
+    assert "FROM python:3.12-slim-bookworm" in content
 
 
 def test_create_dockerfile_should_extract_major_minor_from_full_version(tmp_path: Path):
     result = create_dockerfile(tmp_path, python_version="3.12.12")
 
     content = result.read_text()
-    assert "FROM python:3.12-slim as builder" in content
-    assert "FROM python:3.12-slim" in content
+    assert "FROM python:3.12-slim-bookworm as builder" in content
+    assert "FROM python:3.12-slim-bookworm" in content
     # Should not include patch version
     assert "3.12.12" not in content
 
@@ -402,8 +402,8 @@ def test_create_dockerfile_should_handle_version_with_two_parts(tmp_path: Path):
     result = create_dockerfile(tmp_path, python_version="3.13")
 
     content = result.read_text()
-    assert "FROM python:3.13-slim as builder" in content
-    assert "FROM python:3.13-slim" in content
+    assert "FROM python:3.13-slim-bookworm as builder" in content
+    assert "FROM python:3.13-slim-bookworm" in content
 
 
 def test_create_dockerfile_should_not_overwrite_existing(tmp_path: Path):

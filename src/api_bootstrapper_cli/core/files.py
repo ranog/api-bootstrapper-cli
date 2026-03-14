@@ -251,7 +251,7 @@ def create_dockerfile(project_root: Path, python_version: str = "3.13") -> Path:
     version_parts = python_version.split(".")
     major_minor = f"{version_parts[0]}.{version_parts[1]}"
 
-    content = f"""FROM python:{major_minor}-slim as builder
+    content = f"""FROM python:{major_minor}-slim-bookworm as builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \\
 \tbuild-essential && \\
@@ -263,7 +263,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-FROM python:{major_minor}-slim
+FROM python:{major_minor}-slim-bookworm
 
 WORKDIR /app
 ENV PATH="/opt/venv/bin:$PATH"

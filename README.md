@@ -524,7 +524,7 @@ dependencies = []
 The `init` command (and `add-docker` command) creates a production-ready multi-stage Dockerfile:
 
 ```dockerfile
-FROM python:3.12-slim as builder
+FROM python:3.12-slim-bookworm as builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	build-essential && \
@@ -536,7 +536,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-FROM python:3.12-slim
+FROM python:3.12-slim-bookworm
 
 WORKDIR /app
 ENV PATH="/opt/venv/bin:$PATH"
@@ -548,7 +548,7 @@ COPY ./src ./src
 ```
 
 **Key features:**
-- **Version matching:** Python version in Dockerfile automatically matches `--python` flag (e.g., `--python 3.12.12` → `python:3.12-slim`)
+- **Version matching:** Python version in Dockerfile automatically matches `--python` flag (e.g., `--python 3.12.12` → `python:3.12-slim-bookworm`)
 - **Multi-stage build:** Separates build dependencies from runtime image (smaller final image)
 - **In-project virtualenv:** Installs dependencies in `/opt/venv` and reuses it in runtime stage
 - **FastAPI-ready command:** Runs `uvicorn src.main:app` on port `8080`
