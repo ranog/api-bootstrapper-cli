@@ -209,14 +209,11 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from src.database import Base, engine, get_db
+from src.database import get_db
 from src.models import Item
 from src.schemas import HealthResponse, ItemCreate, ItemRead, ItemUpdate
 
 app = FastAPI(title="API Bootstrapper App")
-
-# Ensure local development has tables available without extra setup steps.
-Base.metadata.create_all(bind=engine)
 
 
 @app.get("/health", response_model=HealthResponse)

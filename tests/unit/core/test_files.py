@@ -376,6 +376,7 @@ def test_create_project_structure_should_create_init_and_scaffold_files(tmp_path
     main_content = (tmp_path / "src" / "main.py").read_text()
     assert '@app.get("/health"' in main_content
     assert '@app.post("/items"' in main_content
+    assert "Base.metadata.create_all" not in main_content
 
     database_content = (tmp_path / "src" / "database.py").read_text()
     assert "postgresql+psycopg://" in database_content
