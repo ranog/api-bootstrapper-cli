@@ -14,13 +14,13 @@ Automates the setup of **pyenv + Poetry** or **uv**, plus **VSCode** configurati
 
 - 🐍 **Python Version Management** - Automatic installation and configuration via pyenv or uv
 - 📦 **Dependency Management** - Poetry or uv setup with in-project virtualenv
-- 📁 **Project Structure** - Automatic creation of `src/` and `tests/` directories
+- 📁 **Project Scaffold** - Generates a runnable FastAPI API with PostgreSQL-ready config and test structure
 - 🔧 **VSCode Integration** - Auto-generated settings for Python interpreter and testing
 - 🪝 **Pre-commit Hooks** - Automated setup with Ruff and Commitizen
-- 🐳 **Docker Support** - Production-ready Dockerfile with multi-stage builds
+- 🐳 **Docker Support** - Production-ready Dockerfile plus local PostgreSQL via `docker-compose.yml`
 - 🌱 **Environment Variables** - Creates `.env.example` template with `PYTHONDONTWRITEBYTECODE=1`
 - 🚀 **Smart Detection** - Skips setup if environment already exists
-- 🎯 **Zero Configuration** - Creates minimal `pyproject.toml` if missing
+- 🎯 **Zero Configuration** - Creates minimal `pyproject.toml` and adds default API dependencies for new projects
 - 🔒 **Environment Isolation** - Clean environment to prevent version conflicts
 - 🔄 **Pluggable Backends** - Choose between pyenv/Poetry (default) or uv via `--manager`
 - ✅ **Battle-tested** - Comprehensive test suite with high coverage
@@ -240,12 +240,12 @@ api-bootstrapper init --python 3.12.12 --no-install
 
 **What it does:**
 
-1. ✅ Creates `src/` and `tests/` directories with `__init__.py` files
+1. ✅ Creates a runnable FastAPI scaffold (`src/main.py`, `database.py`, `models.py`, `schemas.py`) and test folders (`unit/`, `integration/`, `e2e/`)
 2. ✅ Sets up Python environment (pyenv or uv + VSCode)
-3. ✅ Creates `Dockerfile` with matching Python version
+3. ✅ Creates `Dockerfile` and `docker-compose.yml` (PostgreSQL service)
 4. ✅ Creates `.env.example` with `PYTHONDONTWRITEBYTECODE=1`
 5. ✅ Updates `.gitignore` to exclude `.env` files (if `.gitignore` exists)
-6. ✅ Installs pre-commit, ruff, and commitizen dependencies
+6. ✅ Adds default API dependencies on new projects (`fastapi`, `uvicorn`, `sqlalchemy`, `psycopg[binary]`, `alembic`, `pytest`, `httpx`)
 7. ✅ Configures pre-commit hooks
 8. ✅ Shows clear next steps
 
@@ -343,7 +343,7 @@ api-bootstrapper add-pre-commit --path ./my-project
 **What it does:**
 
 1. ✅ Creates `.pre-commit-config.yaml` with Ruff and Commitizen hooks
-2. ✅ Adds `pre-commit`, `ruff`, and `commitizen` to dev dependencies via Poetry
+2. ✅ Adds `pre-commit`, `ruff`, and `commitizen` to dev dependencies via Poetry or uv (based on selected manager)
 3. ✅ Updates hook versions in config to match installed packages
 4. ✅ Installs pre-commit hooks (pre-commit and commit-msg)
 
@@ -367,7 +367,7 @@ git commit -m "fix: correct bug"  # ✓ Valid conventional commit
 
 **Requires:**
 - Git repository initialized (`.git/` directory)
-- Poetry environment configured
+- Poetry or uv environment configured
 
 ---
 
@@ -400,7 +400,7 @@ api-bootstrapper add-docker --path ./my-project --python 3.13
 **Generated Dockerfile features:**
 - **Multi-stage build** - Separates build dependencies from runtime
 - **Virtual environment** - Uses `/opt/venv` for isolated dependencies
-- **Minimal size** - Based on `python:X.Y-slim` image
+- **Minimal size** - Based on `python:X.Y-slim-bookworm` image
 - **FastAPI ready** - Configured for `src.main:app` with uvicorn
 
 **Example workflow:**
@@ -450,10 +450,24 @@ my-project/
 ├── .vscode/
 │   └── settings.json        # VSCode Python configuration
 ├── Dockerfile               # Docker configuration (created by init)
-├── src/                     # Source code directory (created by init)
-│   └── __init__.py
-├── tests/                   # Tests directory (created by init)
-│   └── __init__.py
+├── Makefile                 # Common dev/build/test commands (created by init)
+├── docker-compose.yml       # Local PostgreSQL service (created by init)
+├── src/
+│   ├── __init__.py
+│   ├── main.py              # FastAPI app (healthcheck + CRUD)
+│   ├── database.py          # SQLAlchemy engine/session
+│   ├── models.py            # SQLAlchemy models
+│   └── schemas.py           # Pydantic schemas
+├── tests/
+│   ├── __init__.py
+│   ├── conftest.py          # FastAPI TestClient + DB override
+│   ├── unit/
+│   │   └── __init__.py
+│   ├── integration/
+│   │   ├── __init__.py
+│   │   └── test_api_flow.py # Basic healthcheck + CRUD flow
+│   └── e2e/
+│       └── __init__.py
 └── pyproject.toml           # Project configuration (format depends on --manager)
 ```
 
@@ -469,7 +483,7 @@ The `init` command creates a `.env.example` file with sensible defaults:
 PYTHONDONTWRITEBYTECODE=1  # Prevents creation of __pycache__ and .pyc files
 
 # Add your project-specific environment variables below
-# DATABASE_URL=postgresql://user:password@localhost:5432/dbname
+DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/app_db
 # SECRET_KEY=your-secret-key-here
 # DEBUG=False
 ```
@@ -517,7 +531,8 @@ dependencies = []
 - Poetry backend uses `[tool.poetry]` section with caret constraint (`^X.Y`)
 - uv backend uses `[project]` section (PEP 621) with floor constraint (`>=X.Y`)
 - Neither file is ever overwritten if `pyproject.toml` already exists
-- When bootstrapping a brand-new project with `--install`, the CLI runs `poetry add uvicorn` or `uv add uvicorn` to persist the resolved version automatically in `pyproject.toml`
+- When bootstrapping a brand-new project with `--install`, the CLI runs `poetry add`/`uv add` for:
+  `fastapi`, `uvicorn`, `sqlalchemy`, `psycopg[binary]`, `alembic`, `pytest`, `httpx`
 
 ### Generated Dockerfile
 
@@ -559,13 +574,35 @@ COPY ./src ./src
 - Full version `3.11.5` → Docker tag `3.11`
 - Ensures consistency between `.python-version`, `pyproject.toml`, and `Dockerfile`
 
+### Generated docker-compose.yml
+
+The `init` command creates a `docker-compose.yml` with PostgreSQL ready for local development:
+
+```yaml
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: app_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+```
+
+Start local database:
+
+```bash
+docker compose up -d db
+```
+
 ---
 
 ## 🎯 Philosophy
 
-Instead of generating a huge opinionated template, `api-bootstrapper-cli` allows you to:
+`api-bootstrapper-cli` gives you a professional, runnable baseline while keeping setup deterministic:
 
-- ✅ Initialize a minimal working environment
+- ✅ Initialize a working API scaffold (healthcheck + CRUD + tests)
 - ✅ Add platform features incrementally
 - ✅ Maintain idempotency (safe to run multiple times)
 - ✅ Avoid breaking existing setups
@@ -845,11 +882,10 @@ api-bootstrapper bootstrap-env --python <version> --path . --manager uv
 - ✅ `add-pre-commit` - Git hooks with Ruff and Commitizen
 - ✅ `add-docker` - Dockerfile for Python applications
 - ✅ Environment variables - `.env.example` template with `PYTHONDONTWRITEBYTECODE=1`
-- ✅ Project structure - `src/` and `tests/` directories
+- ✅ Project scaffold - FastAPI app + tests + Makefile
+- ✅ Local PostgreSQL - `docker-compose.yml` created by `init`
 - ⬜ `add-alembic` - Database migrations
-- ⬜ `add-docker-postgres` - Local database
 - ⬜ `add-mypy` - Type checking
-- ⬜ `add-healthcheck` - Basic health endpoints
 - ⬜ Profiles - fastapi-postgres-clean-arch
 
 ---

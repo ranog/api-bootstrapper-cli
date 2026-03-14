@@ -8,6 +8,7 @@ from rich.console import Console
 from api_bootstrapper_cli.commands.add_pre_commit import add_pre_commit
 from api_bootstrapper_cli.commands.bootstrap_env import ManagerChoice, bootstrap_env
 from api_bootstrapper_cli.core.files import (
+    create_docker_compose,
     create_dockerfile,
     create_env_example,
     create_makefile,
@@ -83,7 +84,8 @@ def init(
 
         console.print("\n[bold]Step 3/6:[/bold] Creating Dockerfile")
         create_dockerfile(path, python_version=python)
-        console.print("  ✓ Created Dockerfile")
+        create_docker_compose(path)
+        console.print("  ✓ Created Dockerfile and docker-compose.yml")
 
         console.print("\n[bold]Step 4/6:[/bold] Setting up environment file")
         create_env_example(path)

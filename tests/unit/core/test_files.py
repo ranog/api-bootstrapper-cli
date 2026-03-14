@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from api_bootstrapper_cli.core.files import (
+    create_docker_compose,
     create_dockerfile,
     create_env_example,
     create_makefile,
@@ -245,6 +246,7 @@ def test_create_env_example_should_create_template_file(tmp_path: Path):
     assert "PYTHONDONTWRITEBYTECODE=1" in content
     assert "Environment variables template" in content
     assert "Copy this file to .env" in content
+    assert "DATABASE_URL=postgresql+psycopg://" in content
 
 
 def test_create_env_example_should_add_variable_to_existing(tmp_path: Path):
@@ -339,34 +341,63 @@ def test_create_project_structure_should_create_directories(tmp_path: Path):
 
     src_dir = tmp_path / "src"
     tests_dir = tmp_path / "tests"
+    tests_unit_dir = tests_dir / "unit"
+    tests_integration_dir = tests_dir / "integration"
+    tests_e2e_dir = tests_dir / "e2e"
 
     assert src_dir.exists()
     assert src_dir.is_dir()
     assert tests_dir.exists()
     assert tests_dir.is_dir()
+    assert tests_unit_dir.exists()
+    assert tests_integration_dir.exists()
+    assert tests_e2e_dir.exists()
 
 
-def test_create_project_structure_should_create_init_files(tmp_path: Path):
+def test_create_project_structure_should_create_init_and_scaffold_files(tmp_path: Path):
     create_project_structure(tmp_path)
 
-    src_init = tmp_path / "src" / "__init__.py"
-    tests_init = tmp_path / "tests" / "__init__.py"
+    expected_paths = [
+        tmp_path / "src" / "__init__.py",
+        tmp_path / "src" / "main.py",
+        tmp_path / "src" / "database.py",
+        tmp_path / "src" / "models.py",
+        tmp_path / "src" / "schemas.py",
+        tmp_path / "tests" / "__init__.py",
+        tmp_path / "tests" / "conftest.py",
+        tmp_path / "tests" / "unit" / "__init__.py",
+        tmp_path / "tests" / "integration" / "__init__.py",
+        tmp_path / "tests" / "integration" / "test_api_flow.py",
+        tmp_path / "tests" / "e2e" / "__init__.py",
+    ]
+    for file_path in expected_paths:
+        assert file_path.exists()
 
-    assert src_init.exists()
-    assert tests_init.exists()
-    assert src_init.read_text() == ""
-    assert tests_init.read_text() == ""
+    main_content = (tmp_path / "src" / "main.py").read_text()
+    assert '@app.get("/health"' in main_content
+    assert '@app.post("/items"' in main_content
+
+    database_content = (tmp_path / "src" / "database.py").read_text()
+    assert "postgresql+psycopg://" in database_content
+    assert "pool_pre_ping=True" in database_content
+
+    conftest_content = (tmp_path / "tests" / "conftest.py").read_text()
+    assert "override_get_db" in conftest_content
+    assert "TestClient" in conftest_content
 
 
-def test_create_project_structure_should_not_overwrite_existing_init(tmp_path: Path):
+def test_create_project_structure_should_not_overwrite_existing_files(tmp_path: Path):
     src_dir = tmp_path / "src"
     src_dir.mkdir()
     src_init = src_dir / "__init__.py"
+    src_main = src_dir / "main.py"
     src_init.write_text("# Existing content")
+    src_main.write_text("# Existing API")
 
     create_project_structure(tmp_path)
 
     assert src_init.read_text() == "# Existing content"
+    assert src_main.read_text() == "# Existing API"
 
 
 def test_create_dockerfile_should_create_file(tmp_path: Path):
@@ -417,6 +448,29 @@ def test_create_dockerfile_should_not_overwrite_existing(tmp_path: Path):
 
     assert result == dockerfile
     assert result.read_text() == original_content
+
+
+def test_create_docker_compose_should_create_file(tmp_path: Path):
+    result = create_docker_compose(tmp_path)
+
+    assert result == tmp_path / "docker-compose.yml"
+    assert result.exists()
+
+    content = result.read_text()
+    assert "image: postgres:16-alpine" in content
+    assert "POSTGRES_DB: app_db" in content
+    assert "pg_isready -U postgres -d app_db" in content
+
+
+def test_create_docker_compose_should_not_overwrite_existing(tmp_path: Path):
+    compose_file = tmp_path / "docker-compose.yml"
+    original_content = "services:\n  redis:\n    image: redis:7\n"
+    compose_file.write_text(original_content)
+
+    result = create_docker_compose(tmp_path)
+
+    assert result == compose_file
+    assert compose_file.read_text() == original_content
 
 
 def test_should_create_makefile_for_poetry_projects(tmp_path: Path):

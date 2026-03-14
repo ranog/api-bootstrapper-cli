@@ -15,13 +15,27 @@ runner = CliRunner()
 
 @pytest.fixture(autouse=True)
 def cleanup_generated_dockerfile():
-    dockerfile_path = Path.cwd() / "Dockerfile"
-    existed_before = dockerfile_path.exists()
+    project_root = Path.cwd()
+    generated_paths = [
+        project_root / "Dockerfile",
+        project_root / "docker-compose.yml",
+        project_root / "src" / "main.py",
+        project_root / "src" / "database.py",
+        project_root / "src" / "models.py",
+        project_root / "src" / "schemas.py",
+        project_root / "tests" / "__init__.py",
+        project_root / "tests" / "unit" / "__init__.py",
+        project_root / "tests" / "integration" / "__init__.py",
+        project_root / "tests" / "integration" / "test_api_flow.py",
+        project_root / "tests" / "e2e" / "__init__.py",
+    ]
+    existed_before = {path: path.exists() for path in generated_paths}
 
     yield
 
-    if not existed_before and dockerfile_path.exists():
-        dockerfile_path.unlink()
+    for path in generated_paths:
+        if not existed_before[path] and path.exists():
+            path.unlink()
 
 
 def test_should_show_init_help():
@@ -120,6 +134,19 @@ def test_should_create_makefile_during_init(
 
     assert result.exit_code == 0
     assert (tmp_path / "Makefile").exists()
+
+
+@patch("api_bootstrapper_cli.commands.init.bootstrap_env")
+@patch("api_bootstrapper_cli.commands.init.add_pre_commit")
+def test_should_create_docker_compose_during_init(
+    mock_pre_commit: MagicMock, mock_bootstrap: MagicMock, tmp_path: Path
+):
+    result = runner.invoke(
+        app, ["init", "--python", "3.12.12", "--path", str(tmp_path)]
+    )
+
+    assert result.exit_code == 0
+    assert (tmp_path / "docker-compose.yml").exists()
 
 
 @patch("api_bootstrapper_cli.commands.init.bootstrap_env")

@@ -3,11 +3,12 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 from typing import cast
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 import pytest
 
 from api_bootstrapper_cli.core.environment_service import (
+    DEFAULT_BOOTSTRAP_DEPENDENCIES,
     EnvironmentBootstrapService,
     EnvironmentSetupResult,
 )
@@ -270,7 +271,10 @@ def test_should_create_environment_when_pyproject_is_missing(tmp_path: Path, moc
     result = service.bootstrap(tmp_path, "3.12.3", install_dependencies=True)
 
     ensure_python_spy.assert_called_once_with("3.12.3")
-    add_dependency_spy.assert_called_once_with(tmp_path, "uvicorn")
+    add_dependency_spy.assert_has_calls(
+        [call(tmp_path, dependency) for dependency in DEFAULT_BOOTSTRAP_DEPENDENCIES]
+    )
+    assert add_dependency_spy.call_count == len(DEFAULT_BOOTSTRAP_DEPENDENCIES)
     assert result.python_version == "3.12.3"
 
 

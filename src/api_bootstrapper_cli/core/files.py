@@ -152,7 +152,7 @@ def create_env_example(project_root: Path) -> None:
 PYTHONDONTWRITEBYTECODE=1
 
 # Add your project-specific environment variables below
-# DATABASE_URL=postgresql://user:password@localhost:5432/dbname
+DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/app_db
 # SECRET_KEY=your-secret-key-here
 # DEBUG=False
 """
@@ -203,33 +203,279 @@ def update_gitignore(project_root: Path) -> None:
         write_text(gitignore_path, new_content, overwrite=True)
 
 
+MAIN_PY_TEMPLATE = """from __future__ import annotations
+
+from fastapi import Depends, FastAPI, HTTPException, status
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from src.database import Base, engine, get_db
+from src.models import Item
+from src.schemas import HealthResponse, ItemCreate, ItemRead, ItemUpdate
+
+app = FastAPI(title="API Bootstrapper App")
+
+# Ensure local development has tables available without extra setup steps.
+Base.metadata.create_all(bind=engine)
+
+
+@app.get("/health", response_model=HealthResponse)
+def healthcheck(db: Session = Depends(get_db)) -> HealthResponse:
+    db.execute(text("SELECT 1"))
+    return HealthResponse(status="ok", database="up")
+
+
+@app.post("/items", response_model=ItemRead, status_code=status.HTTP_201_CREATED)
+def create_item(payload: ItemCreate, db: Session = Depends(get_db)) -> Item:
+    item = Item(name=payload.name)
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+@app.get("/items", response_model=list[ItemRead])
+def list_items(db: Session = Depends(get_db)) -> list[Item]:
+    return db.query(Item).order_by(Item.id).all()
+
+
+@app.get("/items/{item_id}", response_model=ItemRead)
+def get_item(item_id: int, db: Session = Depends(get_db)) -> Item:
+    item = db.get(Item, item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return item
+
+
+@app.put("/items/{item_id}", response_model=ItemRead)
+def update_item(item_id: int, payload: ItemUpdate, db: Session = Depends(get_db)) -> Item:
+    item = db.get(Item, item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    item.name = payload.name
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+@app.delete("/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_item(item_id: int, db: Session = Depends(get_db)) -> None:
+    item = db.get(Item, item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    db.delete(item)
+    db.commit()
+    return None
+"""
+
+DATABASE_PY_TEMPLATE = """from __future__ import annotations
+
+import os
+from collections.abc import Generator
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, declarative_base, sessionmaker
+
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+psycopg://postgres:postgres@localhost:5432/app_db",
+)
+
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+
+def get_db() -> Generator[Session, None, None]:
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+"""
+
+MODELS_PY_TEMPLATE = """from __future__ import annotations
+
+from sqlalchemy import String
+from sqlalchemy.orm import Mapped, mapped_column
+
+from src.database import Base
+
+
+class Item(Base):
+    __tablename__ = "items"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
+"""
+
+SCHEMAS_PY_TEMPLATE = """from __future__ import annotations
+
+from pydantic import BaseModel, ConfigDict
+
+
+class HealthResponse(BaseModel):
+    status: str
+    database: str
+
+
+class ItemCreate(BaseModel):
+    name: str
+
+
+class ItemUpdate(BaseModel):
+    name: str
+
+
+class ItemRead(BaseModel):
+    id: int
+    name: str
+
+    model_config = ConfigDict(from_attributes=True)
+"""
+
+TESTS_CONFTEST_TEMPLATE = """from __future__ import annotations
+
+from collections.abc import Generator
+
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
+
+from src.database import Base, get_db
+from src.main import app
+
+# Keep tests fast and deterministic with an isolated in-memory database.
+engine = create_engine(
+    "sqlite://",
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+def override_get_db() -> Generator[Session, None, None]:
+    db = TestingSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+@pytest.fixture(autouse=True)
+def reset_database() -> Generator[None, None, None]:
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    yield
+    Base.metadata.drop_all(bind=engine)
+
+
+@pytest.fixture
+def client() -> Generator[TestClient, None, None]:
+    app.dependency_overrides[get_db] = override_get_db
+    with TestClient(app) as test_client:
+        yield test_client
+    app.dependency_overrides.clear()
+"""
+
+TESTS_API_FLOW_TEMPLATE = """from __future__ import annotations
+
+
+def test_should_return_healthcheck_status(client):
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok", "database": "up"}
+
+
+def test_should_execute_basic_crud_flow(client):
+    created_response = client.post("/items", json={"name": "first item"})
+
+    assert created_response.status_code == 201
+    created_payload = created_response.json()
+    assert created_payload["name"] == "first item"
+    item_id = created_payload["id"]
+
+    fetched_response = client.get(f"/items/{item_id}")
+
+    assert fetched_response.status_code == 200
+    assert fetched_response.json()["name"] == "first item"
+
+    listed_response = client.get("/items")
+
+    assert listed_response.status_code == 200
+    listed_payload = listed_response.json()
+    assert len(listed_payload) == 1
+    assert listed_payload[0]["id"] == item_id
+
+    updated_response = client.put(f"/items/{item_id}", json={"name": "updated item"})
+
+    assert updated_response.status_code == 200
+    assert updated_response.json()["name"] == "updated item"
+
+    deleted_response = client.delete(f"/items/{item_id}")
+    assert deleted_response.status_code == 204
+
+    missing_response = client.get(f"/items/{item_id}")
+    assert missing_response.status_code == 404
+"""
+
+
 def create_project_structure(project_root: Path) -> None:
-    """Create src/ and tests/ directories with __init__.py files.
+    """Create project folders and a runnable FastAPI + PostgreSQL scaffold.
 
     Logic:
     - Creates src/ directory if it doesn't exist
-    - Creates src/__init__.py if it doesn't exist
+    - Creates src modules for API, DB and schemas if missing
     - Creates tests/ directory if it doesn't exist
-    - Creates tests/__init__.py if it doesn't exist
+    - Creates test packages and a minimal integration flow if missing
 
     Args:
         project_root: Root directory of the project.
     """
-    # Create src/ directory and __init__.py
     src_dir = project_root / "src"
-    ensure_dir(src_dir)
-
-    src_init = src_dir / "__init__.py"
-    if not src_init.exists():
-        write_text(src_init, "")
-
-    # Create tests/ directory and __init__.py
     tests_dir = project_root / "tests"
-    ensure_dir(tests_dir)
+    tests_unit_dir = tests_dir / "unit"
+    tests_integration_dir = tests_dir / "integration"
+    tests_e2e_dir = tests_dir / "e2e"
 
-    tests_init = tests_dir / "__init__.py"
-    if not tests_init.exists():
-        write_text(tests_init, "")
+    for directory in [
+        src_dir,
+        tests_dir,
+        tests_unit_dir,
+        tests_integration_dir,
+        tests_e2e_dir,
+    ]:
+        ensure_dir(directory)
+
+    for init_path in [
+        src_dir / "__init__.py",
+        tests_dir / "__init__.py",
+        tests_unit_dir / "__init__.py",
+        tests_integration_dir / "__init__.py",
+        tests_e2e_dir / "__init__.py",
+    ]:
+        _write_if_missing(init_path, "")
+
+    scaffold_files = {
+        src_dir / "main.py": MAIN_PY_TEMPLATE,
+        src_dir / "database.py": DATABASE_PY_TEMPLATE,
+        src_dir / "models.py": MODELS_PY_TEMPLATE,
+        src_dir / "schemas.py": SCHEMAS_PY_TEMPLATE,
+        tests_dir / "conftest.py": TESTS_CONFTEST_TEMPLATE,
+        tests_integration_dir / "test_api_flow.py": TESTS_API_FLOW_TEMPLATE,
+    }
+    for path, content in scaffold_files.items():
+        _write_if_missing(path, content)
+
+
+def _write_if_missing(path: Path, content: str) -> None:
+    if not path.exists():
+        write_text(path, content)
 
 
 def create_makefile(
@@ -325,6 +571,39 @@ tests: init
 def _normalize_project_name(project_name: str) -> str:
     normalized = re.sub(r"[^a-zA-Z0-9_.-]+", "-", project_name).strip("-")
     return normalized.lower() or "python-app"
+
+
+def create_docker_compose(project_root: Path) -> Path:
+    """Create docker-compose.yml with a PostgreSQL service."""
+    compose_path = project_root / "docker-compose.yml"
+
+    if compose_path.exists():
+        return compose_path
+
+    content = """services:
+  db:
+    image: postgres:16-alpine
+    container_name: app-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: app_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d app_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+"""
+    write_text(compose_path, content)
+    return compose_path
 
 
 def create_dockerfile(project_root: Path, python_version: str = "3.13") -> Path:

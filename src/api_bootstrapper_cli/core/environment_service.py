@@ -14,6 +14,17 @@ from api_bootstrapper_cli.core.protocols import (
 )
 
 
+DEFAULT_BOOTSTRAP_DEPENDENCIES = (
+    "fastapi",
+    "uvicorn",
+    "sqlalchemy",
+    "psycopg[binary]",
+    "alembic",
+    "pytest",
+    "httpx",
+)
+
+
 @dataclass
 class EnvironmentSetupResult:
     python_version: str
@@ -225,8 +236,9 @@ class EnvironmentBootstrapService:
         self._deps.use_python(project_root, python_path)
 
         if created_minimal_pyproject and install_dependencies:
-            self._logger.info(f"[{dep_mgr}] Adding default runtime dependency: uvicorn")
-            self._deps.add_dependency(project_root, "uvicorn")
+            self._logger.info(f"[{dep_mgr}] Adding default API and test dependencies")
+            for dependency in DEFAULT_BOOTSTRAP_DEPENDENCIES:
+                self._deps.add_dependency(project_root, dependency)
 
         venv_path_dir = self._deps.get_venv_path(project_root)
         if not venv_path_dir.exists():
