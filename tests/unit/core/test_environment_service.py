@@ -230,6 +230,7 @@ def test_should_create_environment_when_venv_is_missing(tmp_path: Path, mocker):
     editor = MockEditorWriter()
 
     ensure_python_spy = mocker.spy(python_env, "ensure_python")
+    add_dependency_spy = mocker.spy(deps, "add_dependency")
 
     service = EnvironmentBootstrapService(
         python_env_manager=python_env,
@@ -241,6 +242,10 @@ def test_should_create_environment_when_venv_is_missing(tmp_path: Path, mocker):
     result = service.bootstrap(tmp_path, "3.12.3", install_dependencies=True)
 
     ensure_python_spy.assert_called_once_with("3.12.3")
+    add_dependency_spy.assert_has_calls(
+        [call(tmp_path, dependency) for dependency in DEFAULT_BOOTSTRAP_DEPENDENCIES]
+    )
+    assert add_dependency_spy.call_count == len(DEFAULT_BOOTSTRAP_DEPENDENCIES)
     assert result.python_version == "3.12.3"
 
 

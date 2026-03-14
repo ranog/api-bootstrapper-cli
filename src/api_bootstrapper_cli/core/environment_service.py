@@ -65,16 +65,13 @@ class EnvironmentBootstrapService:
 
         python_path = self._setup_python_environment(project_root, python_version)
         self._install_python_dependencies(python_version)
-        created_minimal_pyproject = self._ensure_pyproject_exists(
-            project_root, python_version
-        )
+        self._ensure_pyproject_exists(project_root, python_version)
 
         result = self._setup_dependency_environment(
             project_root,
             python_path,
             python_version,
             install_dependencies,
-            created_minimal_pyproject,
         )
 
         return result
@@ -226,7 +223,6 @@ class EnvironmentBootstrapService:
         python_path: Path,
         python_version: str,
         install_dependencies: bool,
-        created_minimal_pyproject: bool,
     ) -> EnvironmentSetupResult:
         dep_mgr = getattr(self._deps, "name", "deps")
         self._logger.info(f"[bold][{dep_mgr}] Configuring {dep_mgr} environment[/bold]")
@@ -235,7 +231,7 @@ class EnvironmentBootstrapService:
         self._logger.info(f"[{dep_mgr}] Linking to Python version")
         self._deps.use_python(project_root, python_path)
 
-        if created_minimal_pyproject and install_dependencies:
+        if install_dependencies:
             self._logger.info(f"[{dep_mgr}] Adding default API and test dependencies")
             for dependency in DEFAULT_BOOTSTRAP_DEPENDENCIES:
                 self._deps.add_dependency(project_root, dependency)
