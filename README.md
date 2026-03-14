@@ -18,8 +18,8 @@ Automates the setup of **pyenv + Poetry** or **uv**, plus **VSCode** configurati
 - 🔧 **VSCode Integration** - Auto-generated settings for Python interpreter and testing
 - 🪝 **Pre-commit Hooks** - Automated setup with Ruff and Commitizen
 - 🐳 **Docker Support** - Production-ready Dockerfile with multi-stage builds
-- � **Environment Variables** - Creates `.env.example` template with `PYTHONDONTWRITEBYTECODE=1`
-- �🚀 **Smart Detection** - Skips setup if environment already exists
+- 🌱 **Environment Variables** - Creates `.env.example` template with `PYTHONDONTWRITEBYTECODE=1`
+- 🚀 **Smart Detection** - Skips setup if environment already exists
 - 🎯 **Zero Configuration** - Creates minimal `pyproject.toml` if missing
 - 🔒 **Environment Isolation** - Clean environment to prevent version conflicts
 - 🔄 **Pluggable Backends** - Choose between pyenv/Poetry (default) or uv via `--manager`
@@ -178,15 +178,19 @@ source .venv/bin/activate
 
 ### Python Version Support
 
-**Created projects default to Python 3.10+**
+**Default behavior:**
 
-When bootstrapping a new project without specifying a Python version, the tool creates a `pyproject.toml` with:
+- `bootstrap-env` uses `3.12.12` when `--python` is omitted
+- `init` requires an explicit `--python` value
+- `pyproject.toml` constraints always follow the requested version (major.minor)
+
+Example (`--python 3.12.12`):
 ```toml
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.12"
 ```
 
-**Why Python 3.10 as minimum?**
+**Why Python 3.10+ is still supported for target projects?**
 - ✅ Still under official security support (EOL: October 2026)
 - ✅ Compatible with all development tools (ruff, pre-commit, mypy, pytest)
 - ✅ Balances compatibility with modern Python features
@@ -207,10 +211,6 @@ api-bootstrapper init --python 3.13.2
 The tool will automatically set the correct Python constraint in `pyproject.toml` based on the version you specify.
 
 > **Note:** The CLI itself requires Python 3.12+ to run, but can bootstrap projects with Python 3.10+.
-
----
-- **Empty directory** - Will create a minimal `pyproject.toml` and setup full environment
-- **Existing project** - With `pyproject.toml` already present
 
 ---
 
@@ -493,7 +493,7 @@ authors = []
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"  # Default: 3.10+ (automatically set from --python version)
+python = "^3.12"  # Example with --python 3.12.12 (always follows --python)
 
 [build-system]
 requires = ["poetry-core"]
@@ -508,7 +508,7 @@ name = "my-project"
 version = "0.1.0"
 description = ""
 readme = "README.md"
-requires-python = ">=3.10"  # automatically set from --python version
+requires-python = ">=3.12"  # Example with --python 3.12.12
 dependencies = []
 ```
 
@@ -517,60 +517,42 @@ dependencies = []
 - Poetry backend uses `[tool.poetry]` section with caret constraint (`^X.Y`)
 - uv backend uses `[project]` section (PEP 621) with floor constraint (`>=X.Y`)
 - Neither file is ever overwritten if `pyproject.toml` already exists
+- When bootstrapping a brand-new project with `--install`, the CLI runs `poetry add uvicorn` or `uv add uvicorn` to persist the resolved version automatically in `pyproject.toml`
 
 ### Generated Dockerfile
 
 The `init` command (and `add-docker` command) creates a production-ready multi-stage Dockerfile:
 
 ```dockerfile
-# Build stage
 FROM python:3.12-slim as builder
 
-WORKDIR /app
-
-# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
+	build-essential && \
+    rm -rf /var/lib/apt/lists/*
 
-# Copy project files
-COPY pyproject.toml ./
-COPY src/ ./src/
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Install dependencies
-RUN pip install --no-cache-dir .
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Runtime stage
 FROM python:3.12-slim
 
 WORKDIR /app
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy installed packages from builder
-COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8080"]
 
-# Copy application code
-COPY src/ ./src/
-
-# Run as non-root user
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
-USER appuser
-
-# Health check (uncomment when you have a health endpoint)
-# HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-#   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
-
-EXPOSE 8000
-
-CMD ["python", "-m", "src.main"]
+COPY --from=builder /opt/venv /opt/venv
+COPY ./src ./src
 ```
 
 **Key features:**
 - **Version matching:** Python version in Dockerfile automatically matches `--python` flag (e.g., `--python 3.12.12` → `python:3.12-slim`)
 - **Multi-stage build:** Separates build dependencies from runtime image (smaller final image)
-- **Non-root user:** Runs as `appuser` (UID 1000) for better security
-- **Optimized layers:** Dependencies installed before app code for better caching
-- **Health check template:** Commented example ready to uncomment when needed
+- **In-project virtualenv:** Installs dependencies in `/opt/venv` and reuses it in runtime stage
+- **FastAPI-ready command:** Runs `uvicorn src.main:app` on port `8080`
+- **Optimized layers:** Installs dependencies before app source for better caching
 
 **Version extraction:**
 - Full version `3.12.12` → Docker tag `3.12`
@@ -592,7 +574,7 @@ Designed for teams that want **consistent environments** and **deterministic set
 
 ---
 
-## � Troubleshooting
+## Troubleshooting
 
 ### pyenv not found
 
@@ -857,7 +839,7 @@ api-bootstrapper bootstrap-env --python <version> --path . --manager uv
 
 ---
 
-## �🗺️ Roadmap
+## Roadmap
 - ✅ `bootstrap-env` - pyenv + Poetry + VSCode
 - ✅ `bootstrap-env --manager uv` - uv + VSCode
 - ✅ `add-pre-commit` - Git hooks with Ruff and Commitizen
