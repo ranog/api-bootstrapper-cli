@@ -13,6 +13,13 @@ from tests.conftest import strip_ansi_codes
 runner = CliRunner()
 
 
+def _poetry_exec_success(*args, **kwargs) -> CommandResult:
+    command = args[0]
+    if command == ["poetry", "--version"]:
+        return CommandResult(stdout="Poetry 1.7.0", stderr="", returncode=0)
+    return CommandResult(stdout="", stderr="", returncode=0)
+
+
 @pytest.mark.e2e
 def test_should_show_error_when_pyenv_not_installed(mocker, tmp_path: Path):
     mock_exec = mocker.patch("api_bootstrapper_cli.core.pyenv_manager.exec_cmd")
@@ -62,19 +69,10 @@ def test_should_execute_full_bootstrap_workflow(
         return_value="poetry",
     )
 
-    mock_poetry_exec = mocker.patch("api_bootstrapper_cli.core.poetry_manager.exec_cmd")
-    mock_poetry_exec.side_effect = [
-        CommandResult(stdout="Poetry 1.7.0", stderr="", returncode=0),  # is_installed
-        CommandResult(stdout="", stderr="", returncode=0),  # configure_venv
-        CommandResult(stdout="", stderr="", returncode=0),  # use_python
-        CommandResult(stdout="", stderr="", returncode=0),  # install_dependencies
-        CommandResult(
-            stdout=f"{project_path}/.venv\n", stderr="", returncode=0
-        ),  # get_venv_path (first call)
-        CommandResult(
-            stdout=f"{project_path}/.venv\n", stderr="", returncode=0
-        ),  # get_venv_path (second call in get_venv_python)
-    ]
+    mocker.patch(
+        "api_bootstrapper_cli.core.poetry_manager.exec_cmd",
+        side_effect=_poetry_exec_success,
+    )
 
     result = runner.invoke(
         app,
@@ -230,15 +228,10 @@ def test_should_show_poetry_command_for_normal_path(mocker, tmp_path: Path):
         return_value="poetry",
     )
 
-    mock_poetry_exec = mocker.patch("api_bootstrapper_cli.core.poetry_manager.exec_cmd")
-    mock_poetry_exec.side_effect = [
-        CommandResult(stdout="Poetry 1.7.0", stderr="", returncode=0),
-        CommandResult(stdout="", stderr="", returncode=0),
-        CommandResult(stdout="", stderr="", returncode=0),
-        CommandResult(stdout="", stderr="", returncode=0),
-        CommandResult(stdout=f"{project_path}/.venv\n", stderr="", returncode=0),
-        CommandResult(stdout=f"{project_path}/.venv\n", stderr="", returncode=0),
-    ]
+    mocker.patch(
+        "api_bootstrapper_cli.core.poetry_manager.exec_cmd",
+        side_effect=_poetry_exec_success,
+    )
 
     result = runner.invoke(
         app,
@@ -286,15 +279,10 @@ def test_should_prioritize_poetry_command_for_special_chars_path(
         return_value="poetry",
     )
 
-    mock_poetry_exec = mocker.patch("api_bootstrapper_cli.core.poetry_manager.exec_cmd")
-    mock_poetry_exec.side_effect = [
-        CommandResult(stdout="Poetry 1.7.0", stderr="", returncode=0),
-        CommandResult(stdout="", stderr="", returncode=0),
-        CommandResult(stdout="", stderr="", returncode=0),
-        CommandResult(stdout="", stderr="", returncode=0),
-        CommandResult(stdout=f"{project_path}/.venv\n", stderr="", returncode=0),
-        CommandResult(stdout=f"{project_path}/.venv\n", stderr="", returncode=0),
-    ]
+    mocker.patch(
+        "api_bootstrapper_cli.core.poetry_manager.exec_cmd",
+        side_effect=_poetry_exec_success,
+    )
 
     result = runner.invoke(
         app,
