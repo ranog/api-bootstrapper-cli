@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Bootstrapper Bootstrap Flow"
+  short_description: "Orchestrate full project bootstrap command sequences."
+  default_prompt: "Use $api-bootstrapper-bootstrap-flow to propose and execute the full bootstrap flow for ./my-api."

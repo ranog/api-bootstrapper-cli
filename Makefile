@@ -1,4 +1,4 @@
-.PHONY: help install test test-cov test-unit test-integration test-e2e lint format type-check check pre-commit clean
+.PHONY: help install test test-cov test-unit test-integration test-e2e lint format type-check check pre-commit sync-skills validate-skills clean
 
 help:
 	@echo "Available commands:"
@@ -13,6 +13,8 @@ help:
 	@echo "  make type-check       - Run mypy type checking"
 	@echo "  make check            - Run lint + type-check"
 	@echo "  make pre-commit       - Run pre-commit hooks on all files"
+	@echo "  make sync-skills      - Sync canonical Agent Skills into Codex skills"
+	@echo "  make validate-skills  - Validate skills structure, sync, and smoke contracts"
 	@echo "  make clean            - Remove cache and build files"
 
 install:
@@ -45,6 +47,12 @@ check: lint type-check
 
 pre-commit:
 	pre-commit run --all-files
+
+sync-skills:
+	poetry run python scripts/sync_skills_to_codex.py
+
+validate-skills:
+	poetry run python scripts/validate_skills.py
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true

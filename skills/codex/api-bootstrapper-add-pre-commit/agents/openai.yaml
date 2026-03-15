@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Bootstrapper Add Pre Commit"
+  short_description: "Configure Ruff and Commitizen pre-commit hooks."
+  default_prompt: "Use $api-bootstrapper-add-pre-commit to configure hooks in ./my-api."

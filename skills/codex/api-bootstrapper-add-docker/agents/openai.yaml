@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Bootstrapper Add Docker"
+  short_description: "Create a Dockerfile for an existing Python API."
+  default_prompt: "Use $api-bootstrapper-add-docker to add Docker support to ./my-api with Python 3.13."

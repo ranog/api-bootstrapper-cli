@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Bootstrapper Bootstrap Env"
+  short_description: "Configure Python env and VSCode settings safely."
+  default_prompt: "Use $api-bootstrapper-bootstrap-env to configure ./my-api with Python 3.12.12 and manager uv."

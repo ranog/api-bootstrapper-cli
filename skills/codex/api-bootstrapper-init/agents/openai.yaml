@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Bootstrapper Init"
+  short_description: "Initialize a Python API project in one command."
+  default_prompt: "Use $api-bootstrapper-init to initialize ./my-api with Python 3.12.12 and manager pyenv."

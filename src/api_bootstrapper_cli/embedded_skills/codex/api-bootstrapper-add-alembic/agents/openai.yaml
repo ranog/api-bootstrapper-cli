@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Bootstrapper Add Alembic"
+  short_description: "Handle Alembic setup requests with placeholder status."
+  default_prompt: "Use $api-bootstrapper-add-alembic to check Alembic command status for this project."
