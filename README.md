@@ -81,6 +81,18 @@ To update to the latest version:
 pipx install git+https://github.com/ranog/api-bootstrapper-cli.git --force
 ```
 
+Then install/update bundled Codex skills:
+
+```bash
+api-bootstrapper install-skills
+```
+
+Then install/update bundled Agent Skills (open format):
+
+```bash
+api-bootstrapper install-agent-skills
+```
+
 ### Enable shell completion (optional)
 
 Enable tab completion for commands and options:
@@ -95,7 +107,7 @@ source ~/.bashrc  # or ~/.zshrc
 
 Now you can use tab completion:
 ```bash
-api-bootstrapper <TAB>           # Shows: init, bootstrap-env, add-alembic, add-docker, add-pre-commit
+api-bootstrapper <TAB>           # Shows: init, bootstrap-env, add-alembic, add-docker, add-pre-commit, install-skills, install-agent-skills
 api-bootstrapper bootstrap-env --<TAB>  # Shows: --path, --python, --install
 ```
 
@@ -151,6 +163,36 @@ source .venv/bin/activate
 ---
 
 ## 📖 Usage
+
+### Agent Skills Catalog
+
+This repository now includes a dual skill distribution for agent runtimes:
+
+- `skills/agentskills` - canonical open-format Agent Skills source
+- `skills/codex` - Codex-compatible mirror with `agents/openai.yaml`
+
+Available skills:
+
+- `api-bootstrapper-init`
+- `api-bootstrapper-bootstrap-env`
+- `api-bootstrapper-add-pre-commit`
+- `api-bootstrapper-add-docker`
+- `api-bootstrapper-add-alembic` (placeholder command)
+- `api-bootstrapper-bootstrap-flow` (orchestrator)
+
+If the CLI was installed with `pipx`, no repository clone is required. Install skills directly from the packaged CLI:
+
+```bash
+api-bootstrapper install-skills
+api-bootstrapper install-agent-skills
+```
+
+Keep both trees in sync with:
+
+```bash
+make sync-skills
+make validate-skills
+```
 
 ### Two Ways to Use This CLI
 
@@ -432,6 +474,60 @@ docker run -p 8080:8080 my-api
 **Requires:**
 - `requirements.txt` with dependencies
 - `src/main.py` with FastAPI app
+
+---
+
+### install-skills
+
+Installs bundled Codex skills from the CLI package into your local Codex skills folder.
+
+This command is useful for users who install the CLI via `pipx` and do not clone this repository.
+
+**Basic usage:**
+
+```bash
+# Install/update skills to default target:
+# $CODEX_HOME/skills or ~/.codex/skills
+api-bootstrapper install-skills
+
+# Install to a custom target directory
+api-bootstrapper install-skills --target ~/.codex/skills
+
+# Avoid overwriting existing skills
+api-bootstrapper install-skills --no-overwrite
+```
+
+**What it does:**
+
+1. ✅ Loads embedded skill files bundled in the CLI package
+2. ✅ Copies all `api-bootstrapper-*` skills to your Codex skills directory
+3. ✅ Overwrites existing skill folders by default (or skips with `--no-overwrite`)
+
+---
+
+### install-agent-skills
+
+Installs bundled Agent Skills (open format) from the CLI package into your local Agent Skills folder.
+
+**Basic usage:**
+
+```bash
+# Install/update skills to default target:
+# $AGENT_SKILLS_HOME or ~/.agent-skills
+api-bootstrapper install-agent-skills
+
+# Install to a custom target directory
+api-bootstrapper install-agent-skills --target ~/.agent-skills
+
+# Avoid overwriting existing skills
+api-bootstrapper install-agent-skills --no-overwrite
+```
+
+**What it does:**
+
+1. ✅ Loads embedded open-format Agent Skills from the packaged CLI
+2. ✅ Copies all `api-bootstrapper-*` skills to your Agent Skills directory
+3. ✅ Overwrites existing skill folders by default (or skips with `--no-overwrite`)
 
 ---
 
