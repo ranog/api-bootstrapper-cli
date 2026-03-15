@@ -52,6 +52,8 @@ def test_should_list_all_commands():
     assert "bootstrap-env" in result.stdout
     assert "add-alembic" in result.stdout
     assert "add-pre-commit" in result.stdout
+    assert "install-skills" in result.stdout
+    assert "install-agent-skills" in result.stdout
 
 
 def test_should_show_bootstrap_env_options(expected_bootstrap_help):

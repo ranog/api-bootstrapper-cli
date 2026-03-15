@@ -24,6 +24,9 @@ classifiers = [
     "Topic :: Utilities",
 ]
 packages = [{ include = "api_bootstrapper_cli", from = "src" }]
+include = [
+    { path = "src/api_bootstrapper_cli/embedded_skills", format = ["sdist", "wheel"] },
+]
 
 [tool.poetry.dependencies]
 python = "^3.12"

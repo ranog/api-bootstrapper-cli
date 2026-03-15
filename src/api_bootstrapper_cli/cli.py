@@ -5,6 +5,8 @@ from api_bootstrapper_cli.commands.add_docker import add_docker
 from api_bootstrapper_cli.commands.add_pre_commit import add_pre_commit
 from api_bootstrapper_cli.commands.bootstrap_env import bootstrap_env
 from api_bootstrapper_cli.commands.init import init
+from api_bootstrapper_cli.commands.install_agent_skills import install_agent_skills
+from api_bootstrapper_cli.commands.install_skills import install_skills
 
 
 app = typer.Typer(
@@ -48,6 +50,8 @@ app.command("bootstrap-env")(bootstrap_env)
 app.command("add-alembic")(add_alembic)
 app.command("add-docker")(add_docker)
 app.command("add-pre-commit")(add_pre_commit)
+app.command("install-skills")(install_skills)
+app.command("install-agent-skills")(install_agent_skills)
 
 
 def main() -> None:
