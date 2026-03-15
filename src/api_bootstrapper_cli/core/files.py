@@ -160,14 +160,13 @@ DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/app_db
 
 
 def update_gitignore(project_root: Path) -> None:
-    """Update .gitignore to exclude environment files (only if .gitignore exists).
+    """Update .gitignore to ignore common IDE folders (only if .gitignore exists).
 
     Logic:
     - If .gitignore does NOT exist: do nothing (don't create it)
-    - If .gitignore exists: add .env exclusion rules if not present
-
-    Ensures that .env (with sensitive data) is not committed to git,
-    while .env.example (template) can be versioned.
+    - If .gitignore exists: prefer uncommenting existing `#.vscode/` / `#.idea/`
+      lines instead of appending duplicate entries at the end
+    - If entries are missing entirely, append them once
 
     Args:
         project_root: Directory containing the .gitignore file.
@@ -178,28 +177,46 @@ def update_gitignore(project_root: Path) -> None:
     if not gitignore_path.exists():
         return
 
-    env_patterns = {
-        "# Environment variables",
-        ".env",
-        ".env.local",
-        "!.env.example",
-    }
-
     content = read_text(gitignore_path)
-    lines = set(content.splitlines())
+    lines = content.splitlines()
 
-    # Check if env patterns are already present
-    if env_patterns.issubset(lines):
-        return
+    ide_entries = (".vscode/", ".idea/")
+    uncommented_entries = set()
+    updated_lines = []
+    changed = False
 
-    # Add env patterns if missing
-    missing_patterns = env_patterns - lines
-    if missing_patterns:
-        # Add a newline before the section if file doesn't end with one
-        separator = "\n" if content and not content.endswith("\n") else ""
-        new_content = (
-            content + separator + "\n" + "\n".join(sorted(missing_patterns)) + "\n"
-        )
+    for line in lines:
+        stripped = line.strip()
+        replacement = None
+
+        for entry in ide_entries:
+            if stripped == entry:
+                uncommented_entries.add(entry)
+                break
+            if stripped == f"#{entry}" or stripped == f"# {entry}":
+                replacement = entry
+                uncommented_entries.add(entry)
+                changed = True
+                break
+
+        if replacement is not None:
+            updated_lines.append(replacement)
+        else:
+            updated_lines.append(line)
+
+    missing_entries = [
+        entry for entry in ide_entries if entry not in uncommented_entries
+    ]
+    if missing_entries:
+        changed = True
+        if updated_lines and updated_lines[-1] != "":
+            updated_lines.append("")
+        updated_lines.extend(missing_entries)
+
+    if changed:
+        new_content = "\n".join(updated_lines)
+        if not new_content.endswith("\n"):
+            new_content += "\n"
         write_text(gitignore_path, new_content, overwrite=True)
 
 

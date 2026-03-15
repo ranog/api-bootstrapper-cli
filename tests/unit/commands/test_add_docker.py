@@ -58,18 +58,14 @@ def test_should_skip_if_dockerfile_exists(tmp_path: Path):
 
 
 def test_should_work_in_current_directory(tmp_path: Path):
-    import os
-
-    original_cwd = os.getcwd()
-    try:
-        os.chdir(tmp_path)
+    with runner.isolated_filesystem():
+        isolated_cwd = Path.cwd().resolve()
         result = runner.invoke(app, ["add-docker"])
         output = strip_ansi_codes(result.stdout)
 
         assert result.exit_code == 0
         assert "Adding Docker support" in output
-    finally:
-        os.chdir(original_cwd)
+        assert (isolated_cwd / "Dockerfile").exists()
 
 
 def test_should_show_next_steps(tmp_path: Path):

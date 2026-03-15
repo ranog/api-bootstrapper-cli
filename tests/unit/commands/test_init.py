@@ -217,10 +217,12 @@ def test_should_require_python_argument():
 def test_should_use_current_directory_by_default(
     mock_pre_commit: MagicMock, mock_bootstrap: MagicMock
 ):
-    runner.invoke(app, ["init", "--python", "3.12.12"])
+    with runner.isolated_filesystem():
+        isolated_cwd = Path.cwd().resolve()
+        runner.invoke(app, ["init", "--python", "3.12.12"])
 
     bootstrap_kwargs = mock_bootstrap.call_args.kwargs
     pre_commit_kwargs = mock_pre_commit.call_args.kwargs
 
-    assert bootstrap_kwargs["path"].is_absolute()
-    assert pre_commit_kwargs["path"].is_absolute()
+    assert bootstrap_kwargs["path"] == isolated_cwd
+    assert pre_commit_kwargs["path"] == isolated_cwd

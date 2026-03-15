@@ -13,7 +13,7 @@ console = Console()
 
 def add_docker(
     path: Path = typer.Option(
-        Path.cwd(),
+        Path("."),
         "--path",
         help="Project directory path",
         file_okay=False,

@@ -24,7 +24,7 @@ console = Console()
 def init(
     python: str = typer.Option(..., "--python", "-p", help="Python version to install"),
     path: Path = typer.Option(
-        Path.cwd(),
+        Path("."),
         "--path",
         help="Project directory path",
         file_okay=False,

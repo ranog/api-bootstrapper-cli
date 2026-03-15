@@ -303,37 +303,45 @@ def test_update_gitignore_should_do_nothing_if_not_exists(tmp_path: Path):
     assert not gitignore.exists()
 
 
-def test_update_gitignore_should_add_env_patterns_to_existing(tmp_path: Path):
+def test_update_gitignore_should_add_ide_patterns_to_existing(tmp_path: Path):
     gitignore = tmp_path / ".gitignore"
     gitignore.write_text("# Existing patterns\n*.pyc\n__pycache__/\n")
 
     update_gitignore(tmp_path)
 
     content = gitignore.read_text()
-    assert "*.pyc" in content  # Original content preserved
+    assert "*.pyc" in content
     assert "__pycache__/" in content
-    assert ".env" in content
-    assert ".env.local" in content
-    assert "!.env.example" in content
+    assert ".vscode/" in content
+    assert ".idea/" in content
 
 
-def test_update_gitignore_should_not_duplicate_env_patterns(tmp_path: Path):
+def test_update_gitignore_should_not_duplicate_ide_patterns(tmp_path: Path):
     gitignore = tmp_path / ".gitignore"
-    original_content = """# Environment variables
-.env
-.env.local
-!.env.example
-*.pyc
+    original_content = """*.pyc
+.vscode/
+.idea/
 """
     gitignore.write_text(original_content)
 
     update_gitignore(tmp_path)
 
     content = gitignore.read_text()
-    # Count occurrences
-    assert content.count(".env\n") == 1
-    assert content.count(".env.local\n") == 1
-    assert content.count("!.env.example\n") == 1
+    assert content.count(".vscode/\n") == 1
+    assert content.count(".idea/\n") == 1
+
+
+def test_update_gitignore_should_uncomment_existing_ide_patterns(tmp_path: Path):
+    gitignore = tmp_path / ".gitignore"
+    gitignore.write_text("#.vscode/\n# .idea/\n")
+
+    update_gitignore(tmp_path)
+
+    content = gitignore.read_text()
+    assert "#.vscode/" not in content
+    assert "# .idea/" not in content
+    assert ".vscode/" in content
+    assert ".idea/" in content
 
 
 def test_create_project_structure_should_create_directories(tmp_path: Path):
