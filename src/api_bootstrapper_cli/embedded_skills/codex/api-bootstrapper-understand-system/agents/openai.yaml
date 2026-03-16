@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Bootstrapper Understand System"
+  short_description: "Explain architecture and execution flow before making changes."
+  default_prompt: "Use $api-bootstrapper-understand-system to explain this module flow before we modify it."

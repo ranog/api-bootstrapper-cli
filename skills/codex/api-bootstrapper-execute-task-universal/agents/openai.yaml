@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Bootstrapper Execute Task Universal"
+  short_description: "Apply a universal workflow for planning, tests, implementation, and validation."
+  default_prompt: "Use $api-bootstrapper-execute-task-universal to execute this task end-to-end with the project workflow."

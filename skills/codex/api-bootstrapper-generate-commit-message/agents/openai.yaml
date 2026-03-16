@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Bootstrapper Generate Commit Message"
+  short_description: "Generate a Conventional Commit message from staged changes."
+  default_prompt: "Use $api-bootstrapper-generate-commit-message to propose a commit message from my current git diff."

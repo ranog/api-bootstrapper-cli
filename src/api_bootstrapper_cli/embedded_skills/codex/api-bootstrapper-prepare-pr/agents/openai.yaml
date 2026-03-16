@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Bootstrapper Prepare PR"
+  short_description: "Prepare pull request summary with impact, tests, and validation commands."
+  default_prompt: "Use $api-bootstrapper-prepare-pr to generate a PR summary from this branch changes."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Bootstrapper Implement Feature TDD"
+  short_description: "Implement features following TDD with small, safe changes."
+  default_prompt: "Use $api-bootstrapper-implement-feature-tdd to implement this feature using tests first."

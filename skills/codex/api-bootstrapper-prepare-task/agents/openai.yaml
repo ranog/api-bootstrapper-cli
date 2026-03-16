@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Bootstrapper Prepare Task"
+  short_description: "Structure complex tasks with context, requirements, tests, and validation."
+  default_prompt: "Use $api-bootstrapper-prepare-task to structure this implementation request before coding."

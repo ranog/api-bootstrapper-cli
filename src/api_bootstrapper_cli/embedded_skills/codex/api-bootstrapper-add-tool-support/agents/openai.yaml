@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Bootstrapper Add Tool Support"
+  short_description: "Add support for new external tools with managers and services."
+  default_prompt: "Use $api-bootstrapper-add-tool-support to add support for this external tool in the CLI architecture."

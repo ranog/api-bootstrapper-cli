@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Bootstrapper Sync Branch"
+  short_description: "Safely sync the current branch with the remote default branch."
+  default_prompt: "Use $api-bootstrapper-sync-branch to sync my current branch with origin/main before I commit."

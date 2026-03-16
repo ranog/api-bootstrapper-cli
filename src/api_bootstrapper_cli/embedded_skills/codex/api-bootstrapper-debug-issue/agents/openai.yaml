@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Bootstrapper Debug Issue"
+  short_description: "Debug issues with reproduce-first, test-first correction workflow."
+  default_prompt: "Use $api-bootstrapper-debug-issue to investigate and fix this bug with a failing test first."

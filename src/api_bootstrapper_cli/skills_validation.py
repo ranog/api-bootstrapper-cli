@@ -11,6 +11,19 @@ SKILL_NAMES: tuple[str, ...] = (
     "api-bootstrapper-add-docker",
     "api-bootstrapper-add-alembic",
     "api-bootstrapper-bootstrap-flow",
+    "api-bootstrapper-sync-branch",
+    "api-bootstrapper-generate-commit-message",
+    "api-bootstrapper-prepare-task",
+    "api-bootstrapper-staff-review",
+    "api-bootstrapper-understand-system",
+    "api-bootstrapper-implement-feature-tdd",
+    "api-bootstrapper-refactor-safely",
+    "api-bootstrapper-create-tests",
+    "api-bootstrapper-debug-issue",
+    "api-bootstrapper-add-tool-support",
+    "api-bootstrapper-review-code",
+    "api-bootstrapper-prepare-pr",
+    "api-bootstrapper-execute-task-universal",
 )
 
 SKILL_DIR_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -45,6 +58,71 @@ CODEX_INTERFACE: dict[str, dict[str, str]] = {
         "display_name": "API Bootstrapper Bootstrap Flow",
         "short_description": "Orchestrate full project bootstrap command sequences.",
         "default_prompt": "Use $api-bootstrapper-bootstrap-flow to propose and execute the full bootstrap flow for ./my-api.",
+    },
+    "api-bootstrapper-sync-branch": {
+        "display_name": "API Bootstrapper Sync Branch",
+        "short_description": "Safely sync the current branch with the remote default branch.",
+        "default_prompt": "Use $api-bootstrapper-sync-branch to sync my current branch with origin/main before I commit.",
+    },
+    "api-bootstrapper-generate-commit-message": {
+        "display_name": "API Bootstrapper Generate Commit Message",
+        "short_description": "Generate a Conventional Commit message from staged changes.",
+        "default_prompt": "Use $api-bootstrapper-generate-commit-message to propose a commit message from my current git diff.",
+    },
+    "api-bootstrapper-prepare-task": {
+        "display_name": "API Bootstrapper Prepare Task",
+        "short_description": "Structure complex tasks with context, requirements, tests, and validation.",
+        "default_prompt": "Use $api-bootstrapper-prepare-task to structure this implementation request before coding.",
+    },
+    "api-bootstrapper-staff-review": {
+        "display_name": "API Bootstrapper Staff Review",
+        "short_description": "Run a staff-level review focused on architecture, risks, and test quality.",
+        "default_prompt": "Use $api-bootstrapper-staff-review to review this change with staff engineer rigor.",
+    },
+    "api-bootstrapper-understand-system": {
+        "display_name": "API Bootstrapper Understand System",
+        "short_description": "Explain architecture and execution flow before making changes.",
+        "default_prompt": "Use $api-bootstrapper-understand-system to explain this module flow before we modify it.",
+    },
+    "api-bootstrapper-implement-feature-tdd": {
+        "display_name": "API Bootstrapper Implement Feature TDD",
+        "short_description": "Implement features following TDD with small, safe changes.",
+        "default_prompt": "Use $api-bootstrapper-implement-feature-tdd to implement this feature using tests first.",
+    },
+    "api-bootstrapper-refactor-safely": {
+        "display_name": "API Bootstrapper Refactor Safely",
+        "short_description": "Refactor code while preserving behavior and architectural boundaries.",
+        "default_prompt": "Use $api-bootstrapper-refactor-safely to refactor this module without behavior changes.",
+    },
+    "api-bootstrapper-create-tests": {
+        "display_name": "API Bootstrapper Create Tests",
+        "short_description": "Create behavior-focused pytest coverage for existing modules.",
+        "default_prompt": "Use $api-bootstrapper-create-tests to add missing tests for this module.",
+    },
+    "api-bootstrapper-debug-issue": {
+        "display_name": "API Bootstrapper Debug Issue",
+        "short_description": "Debug issues with reproduce-first, test-first correction workflow.",
+        "default_prompt": "Use $api-bootstrapper-debug-issue to investigate and fix this bug with a failing test first.",
+    },
+    "api-bootstrapper-add-tool-support": {
+        "display_name": "API Bootstrapper Add Tool Support",
+        "short_description": "Add support for new external tools with managers and services.",
+        "default_prompt": "Use $api-bootstrapper-add-tool-support to add support for this external tool in the CLI architecture.",
+    },
+    "api-bootstrapper-review-code": {
+        "display_name": "API Bootstrapper Review Code",
+        "short_description": "Perform technical code review focused on risks and regressions.",
+        "default_prompt": "Use $api-bootstrapper-review-code to review this implementation before merge.",
+    },
+    "api-bootstrapper-prepare-pr": {
+        "display_name": "API Bootstrapper Prepare PR",
+        "short_description": "Prepare pull request summary with impact, tests, and validation commands.",
+        "default_prompt": "Use $api-bootstrapper-prepare-pr to generate a PR summary from this branch changes.",
+    },
+    "api-bootstrapper-execute-task-universal": {
+        "display_name": "API Bootstrapper Execute Task Universal",
+        "short_description": "Apply a universal workflow for planning, tests, implementation, and validation.",
+        "default_prompt": "Use $api-bootstrapper-execute-task-universal to execute this task end-to-end with the project workflow.",
     },
 }
 

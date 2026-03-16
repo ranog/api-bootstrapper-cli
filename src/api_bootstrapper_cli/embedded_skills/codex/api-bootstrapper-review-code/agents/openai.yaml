@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Bootstrapper Review Code"
+  short_description: "Perform technical code review focused on risks and regressions."
+  default_prompt: "Use $api-bootstrapper-review-code to review this implementation before merge."

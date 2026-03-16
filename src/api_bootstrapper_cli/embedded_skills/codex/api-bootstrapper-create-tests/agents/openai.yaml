@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Bootstrapper Create Tests"
+  short_description: "Create behavior-focused pytest coverage for existing modules."
+  default_prompt: "Use $api-bootstrapper-create-tests to add missing tests for this module."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Bootstrapper Refactor Safely"
+  short_description: "Refactor code while preserving behavior and architectural boundaries."
+  default_prompt: "Use $api-bootstrapper-refactor-safely to refactor this module without behavior changes."

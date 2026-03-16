@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Bootstrapper Staff Review"
+  short_description: "Run a staff-level review focused on architecture, risks, and test quality."
+  default_prompt: "Use $api-bootstrapper-staff-review to review this change with staff engineer rigor."
