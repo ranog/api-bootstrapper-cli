@@ -81,8 +81,7 @@ def _create_required_smoke_files(repo_root: Path) -> None:
     alembic_body = "\n".join(
         [
             "Proceed? (yes/no)",
-            "currently unavailable",
-            "add-alembic: TODO",
+            "api-bootstrapper add-alembic --path ./my-api",
         ]
     )
 
@@ -388,8 +387,7 @@ def test_should_report_command_contract_gaps_in_smoke_validation(
     assert any("pyenv command example" in error for error in errors)
     assert any("uv command example" in error for error in errors)
     assert any("init command path" in error for error in errors)
-    assert any("placeholder availability status" in error for error in errors)
-    assert any("expected placeholder output" in error for error in errors)
+    assert any("command usage with --path" in error for error in errors)
 
 
 def test_should_aggregate_validation_errors_from_all_steps(

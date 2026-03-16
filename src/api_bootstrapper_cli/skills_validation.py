@@ -38,8 +38,8 @@ CODEX_INTERFACE: dict[str, dict[str, str]] = {
     },
     "api-bootstrapper-add-alembic": {
         "display_name": "API Bootstrapper Add Alembic",
-        "short_description": "Handle Alembic setup requests with placeholder status.",
-        "default_prompt": "Use $api-bootstrapper-add-alembic to check Alembic command status for this project.",
+        "short_description": "Configure Alembic migrations for a Python API project.",
+        "default_prompt": "Use $api-bootstrapper-add-alembic to configure Alembic in ./my-api.",
     },
     "api-bootstrapper-bootstrap-flow": {
         "display_name": "API Bootstrapper Bootstrap Flow",
@@ -329,11 +329,8 @@ def validate_smoke(repo_root: Path | None = None) -> list[str]:
         agents_root / "api-bootstrapper-add-alembic" / "SKILL.md"
     ).read_text(encoding="utf-8")
 
-    if "currently unavailable" not in alembic_skill:
-        errors.append("Add-alembic skill must declare placeholder availability status.")
-
-    if "add-alembic: TODO" not in alembic_skill:
-        errors.append("Add-alembic skill must include expected placeholder output.")
+    if "api-bootstrapper add-alembic --path" not in alembic_skill:
+        errors.append("Add-alembic skill must include command usage with --path.")
 
     return errors
 

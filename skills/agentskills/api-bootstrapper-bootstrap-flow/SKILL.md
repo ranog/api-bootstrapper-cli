@@ -1,6 +1,6 @@
 ---
 name: api-bootstrapper-bootstrap-flow
-description: Orchestrate the complete api-bootstrapper workflow across init, bootstrap-env, add-pre-commit, add-docker, and add-alembic placeholder handling. Use when the user asks for a full project bootstrap strategy or sequenced execution.
+description: Orchestrate the complete api-bootstrapper workflow across init, bootstrap-env, add-pre-commit, add-docker, and add-alembic. Use when the user asks for a full project bootstrap strategy or sequenced execution.
 ---
 # API Bootstrapper Bootstrap Flow
 
@@ -13,7 +13,8 @@ Use this skill to coordinate a full bootstrap plan across command-level skills.
 - `manager`: `pyenv` or `uv`.
 - `install`: Whether to install dependencies.
 - `include_docker`: Whether Docker setup should be applied (for existing projects).
-- `include_alembic`: Whether placeholder command should be invoked for tracking.
+- `include_alembic`: Whether Alembic migrations setup should be applied.
+- `run_alembic_migrations`: Whether to generate/apply initial migrations after Alembic setup.
 
 ## Orchestration Rules
 
@@ -31,10 +32,16 @@ Append `--no-install` when `install=false`.
 api-bootstrapper bootstrap-env --path <path> --python <python_version> --manager <manager>
 api-bootstrapper add-pre-commit --path <path>
 api-bootstrapper add-docker --path <path> --python <docker_python_version>
-api-bootstrapper add-alembic
+api-bootstrapper add-alembic --path <path>
 ```
 
 Run Docker and Alembic commands only when requested.
+
+3. When `run_alembic_migrations=true`, use:
+
+```bash
+api-bootstrapper add-alembic --path <path> --with-db --create-initial-items --upgrade-head
+```
 
 ## Execution Contract
 
@@ -59,5 +66,4 @@ Run Docker and Alembic commands only when requested.
 
 ## Notes
 
-- `add-alembic` is currently placeholder-only and should be reported as unavailable after execution.
-- Keep command output factual; do not claim features that are not implemented.
+- Keep command output factual and report only observable side effects.
