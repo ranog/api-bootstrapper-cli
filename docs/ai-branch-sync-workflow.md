@@ -88,3 +88,14 @@ Se ocorrer conflito:
 3. pedir confirmação antes de executar `git rebase --continue` ou `git rebase --abort`
 
 Nunca finalizar automaticamente um rebase com conflitos.
+
+---
+
+# 7. Estratégia de commits após sync
+
+Após sincronizar a branch:
+
+1. separar mudanças por contexto lógico
+2. criar commits isolados e atômicos
+3. evitar misturar mudanças sem relação no mesmo commit
+4. usar mensagens coerentes com o contexto real de cada commit

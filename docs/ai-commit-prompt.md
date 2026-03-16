@@ -94,6 +94,19 @@ Se não houver task:
 
 ---
 
+# Escopo do commit
+
+Cada commit deve ser atômico e representar um único contexto lógico.
+
+Regras:
+
+- não misturar feature, refactor, docs e testes sem relação no mesmo commit
+- agrupar apenas arquivos diretamente relacionados ao mesmo objetivo
+- quando houver contextos diferentes, gerar commits separados
+- se houver dúvida sobre o agrupamento, pedir confirmação ao usuário antes de commitar
+
+---
+
 # Regras da mensagem
 
 - usar Conventional Commits
