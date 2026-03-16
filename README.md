@@ -177,7 +177,7 @@ Available skills:
 - `api-bootstrapper-bootstrap-env`
 - `api-bootstrapper-add-pre-commit`
 - `api-bootstrapper-add-docker`
-- `api-bootstrapper-add-alembic` (placeholder command)
+- `api-bootstrapper-add-alembic`
 - `api-bootstrapper-bootstrap-flow` (orchestrator)
 
 If the CLI was installed with `pipx`, no repository clone is required. Install skills directly from the packaged CLI:
@@ -474,6 +474,37 @@ docker run -p 8080:8080 my-api
 **Requires:**
 - `requirements.txt` with dependencies
 - `src/main.py` with FastAPI app
+
+---
+
+### add-alembic
+
+Adds Alembic migration support to your project and can optionally run initial migrations.
+
+**Basic usage:**
+
+```bash
+# Setup Alembic only (creates/updates alembic.ini + alembic/env.py)
+api-bootstrapper add-alembic --path ./my-project
+
+# Setup and run initial migration flow with local PostgreSQL
+api-bootstrapper add-alembic --path ./my-project --with-db --create-initial-items --upgrade-head
+
+# Explicitly use uv backend
+api-bootstrapper add-alembic --path ./my-project --manager uv --with-db --upgrade-head
+```
+
+**What it does:**
+
+1. ✅ Initializes Alembic when missing
+2. ✅ Rewrites `alembic/env.py` to use project `Base.metadata`
+3. ✅ Can start `db` service with Docker Compose (`--with-db`)
+4. ✅ Can generate initial `items` migration (`--create-initial-items`)
+5. ✅ Can apply migrations (`--upgrade-head`)
+
+**Notes:**
+- When `--create-initial-items` or `--upgrade-head` is used, the command automatically starts the local DB service (`db`) before running migrations.
+- The generated revision message is `create items table`.
 
 ---
 
@@ -980,7 +1011,7 @@ api-bootstrapper bootstrap-env --python <version> --path . --manager uv
 - ✅ Environment variables - `.env.example` template with `PYTHONDONTWRITEBYTECODE=1`
 - ✅ Project scaffold - FastAPI app + tests + Makefile
 - ✅ Local PostgreSQL - `docker-compose.yml` created by `init`
-- ⬜ `add-alembic` - Database migrations
+- ✅ `add-alembic` - Database migrations
 - ⬜ `add-mypy` - Type checking
 - ⬜ Profiles - fastapi-postgres-clean-arch
 
