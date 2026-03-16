@@ -1,101 +1,24 @@
 # AI Branch Sync Workflow
 
-Este documento define como agentes de IA devem sincronizar
-a branch atual antes de criar commits.
+Este documento é um guia rápido para uso humano.
 
----
+A execução oficial para agentes está na skill:
+- `$api-bootstrapper-sync-branch`
 
-# 1. Identificar branch atual
+## Como usar
 
-Executar:
-
-```bash
-git branch --show-current
-```
-
----
-
-# 2. Verificar árvore de trabalho limpa
-
-Executar:
-
-```bash
-git status --porcelain
-```
-
-Se houver mudanças não commitadas:
-
-1. não iniciar sync automaticamente
-2. pedir confirmação ao usuário sobre como proceder
-3. somente continuar após decisão explícita
-
----
-
-# 3. Descobrir branch padrão remota
-
-Executar:
-
-```bash
-git symbolic-ref --short refs/remotes/origin/HEAD
-```
-
-Esperado:
+Peça ao agente:
 
 ```text
-origin/main
+Use $api-bootstrapper-sync-branch para sincronizar a branch atual.
 ```
 
-Extrair o nome da branch padrão remota (exemplo: `main`).
+Parâmetros úteis:
+- `remote` (padrão: `origin`)
+- `default_branch` (opcional; quando ausente, a skill detecta automaticamente)
 
----
+## Fonte de verdade
 
-# 4. Sincronizar com o repositório remoto
-
-Executar:
-
-```bash
-git fetch origin --prune
-```
-
----
-
-# 5. Atualizar branch atual
-
-Se a branch atual for `<default_branch>`:
-
-Executar:
-
-```bash
-git pull --ff-only origin <default_branch>
-```
-
-Se a branch atual NÃO for `<default_branch>`:
-
-Executar:
-
-```bash
-git rebase origin/<default_branch>
-```
-
----
-
-# 6. Conflitos
-
-Se ocorrer conflito:
-
-1. listar arquivos em conflito
-2. sugerir resolução
-3. pedir confirmação antes de executar `git rebase --continue` ou `git rebase --abort`
-
-Nunca finalizar automaticamente um rebase com conflitos.
-
----
-
-# 7. Estratégia de commits após sync
-
-Após sincronizar a branch:
-
-1. separar mudanças por contexto lógico
-2. criar commits isolados e atômicos
-3. evitar misturar mudanças sem relação no mesmo commit
-4. usar mensagens coerentes com o contexto real de cada commit
+O comportamento detalhado (passos, confirmação explícita e tratamento de conflito) está em:
+- `skills/agentskills/api-bootstrapper-sync-branch/SKILL.md`
+- `skills/agentskills/api-bootstrapper-sync-branch/references/parameters-and-errors.md`

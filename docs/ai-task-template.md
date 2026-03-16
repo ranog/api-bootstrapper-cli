@@ -2,6 +2,8 @@
 
 Este documento define um template padrão para solicitar tarefas ao Codex neste projeto.
 
+Execução oficial para agentes: `$api-bootstrapper-prepare-task`.
+
 O objetivo é garantir que todas as mudanças:
 
 - respeitem o `AGENTS.md`

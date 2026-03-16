@@ -182,6 +182,19 @@ Available skills:
 - `api-bootstrapper-add-docker`
 - `api-bootstrapper-add-alembic`
 - `api-bootstrapper-bootstrap-flow` (orchestrator)
+- `api-bootstrapper-sync-branch`
+- `api-bootstrapper-generate-commit-message`
+- `api-bootstrapper-create-tests`
+- `api-bootstrapper-debug-issue`
+- `api-bootstrapper-review-code`
+- `api-bootstrapper-prepare-task`
+- `api-bootstrapper-staff-review`
+- `api-bootstrapper-understand-system`
+- `api-bootstrapper-implement-feature-tdd`
+- `api-bootstrapper-refactor-safely`
+- `api-bootstrapper-add-tool-support`
+- `api-bootstrapper-prepare-pr`
+- `api-bootstrapper-execute-task-universal`
 
 If the CLI was installed with `pipx`, no repository clone is required. Install skills directly from the packaged CLI:
 

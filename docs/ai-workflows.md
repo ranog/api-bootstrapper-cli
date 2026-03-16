@@ -16,6 +16,8 @@ Sempre que iniciar uma tarefa com Codex, peça explicitamente para ele:
 
 Use quando estiver explorando código ou quando precisar entender um fluxo existente.
 
+Execução oficial para agentes: `$api-bootstrapper-understand-system`.
+
 ## Passos
 
 1. Peça ao Codex para ler o `AGENTS.md`
@@ -41,6 +43,8 @@ Quero entender o fluxo completo antes de modificar o código.
 # Workflow 2 — Implementar uma nova feature
 
 Este é o fluxo recomendado para adicionar funcionalidades.
+
+Execução oficial para agentes: `$api-bootstrapper-implement-feature-tdd`.
 
 ## Passos
 
@@ -76,6 +80,8 @@ Somente depois implemente a solução.
 
 Use quando precisar melhorar a estrutura do código.
 
+Execução oficial para agentes: `$api-bootstrapper-refactor-safely`.
+
 ## Passos
 
 1. Entender a implementação atual
@@ -105,6 +111,8 @@ Explique o plano antes de aplicar as mudanças.
 
 Use quando um módulo não possui testes.
 
+Execução oficial para agentes: `$api-bootstrapper-create-tests`.
+
 ## Passos
 
 1. Analisar o comportamento do código
@@ -131,6 +139,8 @@ Priorize testes de comportamento.
 # Workflow 5 — Debug de problema
 
 Use quando um bug é identificado.
+
+Execução oficial para agentes: `$api-bootstrapper-debug-issue`.
 
 ## Passos
 
@@ -162,6 +172,8 @@ Explique o raciocínio usado para encontrar a causa.
 
 Esse projeto frequentemente integra novas ferramentas.
 
+Execução oficial para agentes: `$api-bootstrapper-add-tool-support`.
+
 ## Passos
 
 1. Verificar protocolos existentes
@@ -190,6 +202,8 @@ Depois proponha a estrutura e os testes necessários.
 
 Use antes de abrir PR ou ao revisar código de outra pessoa.
 
+Execução oficial para agentes: `$api-bootstrapper-review-code`.
+
 ## Passos
 
 1. Verificar arquitetura
@@ -217,6 +231,8 @@ Sugira melhorias mantendo mudanças pequenas.
 
 Use ao finalizar uma feature.
 
+Execução oficial para agentes: `$api-bootstrapper-prepare-pr`.
+
 ## Passos
 
 1. Revisar mudanças
@@ -243,6 +259,8 @@ Revise as mudanças feitas neste branch e gere uma descrição para PR contendo:
 
 Este é um fluxo genérico que funciona para quase qualquer tarefa.
 
+Execução oficial para agentes: `$api-bootstrapper-execute-task-universal`.
+
 ## Prompt universal
 
 Leia o AGENTS.md e siga as regras arquiteturais e de desenvolvimento do projeto.
@@ -261,15 +279,3 @@ Ao final informe:
 - testes adicionados
 - comandos de validação
 - impacto arquitetural.
-
-1. explique a abordagem
-2. identifique cenários de teste
-3. escreva testes seguindo TDD
-
-Depois implemente a menor mudança possível para satisfazer os testes.
-
-Ao final informe:
-
-- arquivos alterados
-- testes adicionados
-- comandos para validação.

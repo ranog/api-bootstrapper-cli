@@ -2,6 +2,8 @@
 
 Use este bloco no início de tarefas importantes para orientar o agente a trabalhar como um engenheiro sênior/staff dentro deste projeto.
 
+Execução oficial para agentes: `$api-bootstrapper-staff-review`.
+
 ## Instrução base
 
 Leia o `AGENTS.md` e siga rigorosamente as regras arquiteturais, de testes e de desenvolvimento do projeto.
