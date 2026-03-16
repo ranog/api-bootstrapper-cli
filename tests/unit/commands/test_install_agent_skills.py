@@ -22,6 +22,10 @@ def strip_ansi_codes(text: str) -> str:
     return ansi_escape.sub("", text)
 
 
+def normalize_whitespace(text: str) -> str:
+    return " ".join(text.split())
+
+
 @patch("api_bootstrapper_cli.commands.install_agent_skills.install_agentskills")
 def test_should_install_agent_skills_with_default_target(
     mock_install: MagicMock, tmp_path: Path
@@ -37,9 +41,12 @@ def test_should_install_agent_skills_with_default_target(
 
     result = runner.invoke(app, ["install-agent-skills"])
     output = strip_ansi_codes(result.stdout)
+    normalized_output = normalize_whitespace(output)
 
     assert result.exit_code == 0
     assert "Agent Skills installed" in output
+    assert "Bundled api-bootstrapper skills in this release: 1" in normalized_output
+    assert "System skills are managed separately." in normalized_output
     mock_install.assert_called_once_with(target_root=None, overwrite=True)
 
 

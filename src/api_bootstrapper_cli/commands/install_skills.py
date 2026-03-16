@@ -29,6 +29,11 @@ def install_skills(
     """Install bundled Codex skills to the local Codex skills directory."""
     try:
         result = install_codex_skills(target_root=target, overwrite=overwrite)
+        bundled_skills_count = (
+            len(result.installed_skills)
+            + len(result.overwritten_skills)
+            + len(result.skipped_skills)
+        )
 
         console.print()
         console.print("[bold green]✓[/bold green] [green]Skills installed[/green]")
@@ -39,6 +44,12 @@ def install_skills(
             f"[dim]Installed:[/dim] {len(result.installed_skills)} | "
             f"[dim]Overwritten:[/dim] {len(result.overwritten_skills)} | "
             f"[dim]Skipped:[/dim] {len(result.skipped_skills)}"
+        )
+        console.print(
+            f"[dim]Bundled api-bootstrapper skills in this release:[/dim] {bundled_skills_count}"
+        )
+        console.print(
+            "[dim]Note:[/dim] This command installs only bundled api-bootstrapper skills. System skills are managed separately."
         )
 
         if result.skipped_skills:
