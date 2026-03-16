@@ -38,11 +38,11 @@ def test_should_be_typer_instance():
     assert isinstance(app, typer.Typer)
 
 
-def test_should_show_todo_message():
-    result = runner.invoke(app, ["add-alembic"])
+def test_should_show_add_alembic_help():
+    result = runner.invoke(app, ["add-alembic", "--help"])
 
     assert result.exit_code == 0
-    assert "TODO" in result.stdout
+    assert "Add Alembic database migrations support" in result.stdout
 
 
 def test_should_list_all_commands():
