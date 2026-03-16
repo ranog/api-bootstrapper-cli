@@ -107,7 +107,7 @@ source ~/.bashrc  # or ~/.zshrc
 
 Now you can use tab completion:
 ```bash
-api-bootstrapper <TAB>           # Shows: init, bootstrap-env, add-alembic, add-docker, add-pre-commit, install-skills, install-agent-skills
+api-bootstrapper <TAB>           # Shows: init, bootstrap-env, add-alembic, add-docker, add-pre-commit, add-mypy, install-skills, install-agent-skills
 api-bootstrapper bootstrap-env --<TAB>  # Shows: --path, --python, --install
 ```
 
@@ -152,6 +152,9 @@ api-bootstrapper bootstrap-env --python 3.12.12 --path ./my-project --manager uv
 
 # Step 2: Add pre-commit hooks (optional)
 api-bootstrapper add-pre-commit --path ./my-project
+
+# Step 3: Add mypy type-checking config (optional)
+api-bootstrapper add-mypy --path ./my-project
 
 # Navigate and activate
 cd my-project
@@ -410,6 +413,36 @@ git commit -m "fix: correct bug"  # ✓ Valid conventional commit
 **Requires:**
 - Git repository initialized (`.git/` directory)
 - Poetry or uv environment configured
+
+---
+
+### add-mypy
+
+Adds mypy type-checking configuration to your project and ensures mypy is installed
+in dev dependencies.
+
+**Basic usage:**
+
+```bash
+# In current directory
+api-bootstrapper add-mypy
+
+# In a specific directory
+api-bootstrapper add-mypy --path ./my-project
+
+# Explicitly use uv backend
+api-bootstrapper add-mypy --path ./my-project --manager uv
+```
+
+**What it does:**
+
+1. ✅ Adds `mypy` to dev dependencies (Poetry or uv format)
+2. ✅ Creates `[tool.mypy]` config in `pyproject.toml` when missing
+3. ✅ Preserves existing mypy config if already present
+4. ✅ Syncs dependencies (`poetry lock/install` or `uv sync`)
+
+**Next step:**
+- Run `poetry run mypy src` (pyenv/Poetry) or `uv run mypy src` (uv)
 
 ---
 
@@ -1012,7 +1045,7 @@ api-bootstrapper bootstrap-env --python <version> --path . --manager uv
 - ✅ Project scaffold - FastAPI app + tests + Makefile
 - ✅ Local PostgreSQL - `docker-compose.yml` created by `init`
 - ✅ `add-alembic` - Database migrations
-- ⬜ `add-mypy` - Type checking
+- ✅ `add-mypy` - Type checking
 - ⬜ Profiles - fastapi-postgres-clean-arch
 
 ---

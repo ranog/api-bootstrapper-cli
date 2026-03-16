@@ -2,6 +2,7 @@ import typer
 
 from api_bootstrapper_cli.commands.add_alembic import add_alembic
 from api_bootstrapper_cli.commands.add_docker import add_docker
+from api_bootstrapper_cli.commands.add_mypy import add_mypy
 from api_bootstrapper_cli.commands.add_pre_commit import add_pre_commit
 from api_bootstrapper_cli.commands.bootstrap_env import bootstrap_env
 from api_bootstrapper_cli.commands.init import init
@@ -38,6 +39,7 @@ db_app = typer.Typer(
 
 env_app.command("bootstrap")(bootstrap_env)
 hooks_app.command("add-pre-commit")(add_pre_commit)
+hooks_app.command("add-mypy")(add_mypy)
 db_app.command("add-alembic")(add_alembic)
 
 app.add_typer(env_app, name="env")
@@ -50,6 +52,7 @@ app.command("bootstrap-env")(bootstrap_env)
 app.command("add-alembic")(add_alembic)
 app.command("add-docker")(add_docker)
 app.command("add-pre-commit")(add_pre_commit)
+app.command("add-mypy")(add_mypy)
 app.command("install-skills")(install_skills)
 app.command("install-agent-skills")(install_agent_skills)
 
