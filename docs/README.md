@@ -7,8 +7,10 @@ Esta pasta contém recursos para auxiliar agentes de IA (como Codex, ChatGPT e G
 Facilitar o trabalho de agentes de IA fornecendo:
 - **Prompts prontos** para tarefas comuns
 - **Workflows detalhados** com passos e exemplos
+- **Guia de entendimento de arquitetura** para exploração de projetos
 - **Templates estruturados** para tarefas complexas
 - **Modo staff engineer** para revisões críticas
+- **Roadmap técnico** para planejamento de evolução do CLI
 - **Guias de Git** para sincronização de branch e geração de commits
 
 ## Estrutura dos arquivos
@@ -50,6 +52,16 @@ Workflows com execução oficial via skill:
 - Workflow 4 (Criar testes) → `$api-bootstrapper-create-tests`
 - Workflow 5 (Debug) → `$api-bootstrapper-debug-issue`
 - Workflow 7 (Revisão técnica) → `$api-bootstrapper-review-code`
+
+---
+
+### [ai-understand-system.md](ai-understand-system.md)
+**Guia de prompts para mapear arquitetura de sistemas**
+
+Use quando precisar entender um projeto antes de alterar código, revisar implementação ou planejar refatorações.
+
+**Como usar:** Utilize o prompt completo para análise profunda ou o prompt rápido para visão geral.  
+**Execução oficial para agentes:** `$api-bootstrapper-understand-system`.
 
 ---
 
@@ -107,6 +119,15 @@ Use quando for sincronizar a branch local com o remoto antes de criar novos comm
 
 ---
 
+### [api-bootstrapper-cli-roadmap.md](api-bootstrapper-cli-roadmap.md)
+**Roadmap técnico de evolução do projeto**
+
+Use para acompanhar prioridades do `api-bootstrapper-cli`, organizar backlog e alinhar entregas incrementais.
+
+**Como usar:** Quebre os itens em issues pequenas, valide impacto arquitetural e atualize o status a cada release.
+
+---
+
 ## Relação com AGENTS.md
 
 - **AGENTS.md**: Instruções permanentes e estrutura do projeto (arquitetura, convenções, regras)
@@ -117,6 +138,9 @@ O agente sempre segue as regras do AGENTS.md, mas pode usar docs/ como referênc
 ---
 
 ## Ordem de consulta recomendada
+
+Para entender arquitetura antes de iniciar mudanças:
+1. Consulte **ai-understand-system.md** para pedir mapeamento arquitetural completo
 
 Para tarefas simples:
 1. Consulte **ai-prompts.md** → copie e adapte o prompt adequado
