@@ -6,18 +6,15 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
+from api_bootstrapper_cli.core.bootstrap_env_use_case import (
+    BootstrapEnvironmentRequest,
+    BootstrapEnvironmentUseCase,
+)
 from api_bootstrapper_cli.core.environment_service import (
-    EnvironmentBootstrapService,
     EnvironmentSetupResult,
 )
-from api_bootstrapper_cli.core.logger import RichLogger
-from api_bootstrapper_cli.core.poetry_manager import PoetryManager
 from api_bootstrapper_cli.core.protocols import ManagerChoice
-from api_bootstrapper_cli.core.pyenv_manager import PyenvManager
 from api_bootstrapper_cli.core.shell import ShellError
-from api_bootstrapper_cli.core.uv_dependency_manager import UvDependencyManager
-from api_bootstrapper_cli.core.uv_python_manager import UvPythonManager
-from api_bootstrapper_cli.core.vscode_writer import VSCodeWriter
 
 
 console = Console()
@@ -56,45 +53,23 @@ def bootstrap_env(
     Supported managers: pyenv (default, uses Poetry) | uv
     """
     project_root = path.resolve()
-
-    service = _create_bootstrap_service(manager)
+    use_case = BootstrapEnvironmentUseCase()
+    request = BootstrapEnvironmentRequest(
+        project_root=project_root,
+        python_version=python_version,
+        install_dependencies=install,
+        manager=manager,
+    )
 
     try:
-        result = service.bootstrap(
-            project_root=project_root,
-            python_version=python_version,
-            install_dependencies=install,
-        )
+        response = use_case.execute(request)
+        result = response.environment
 
         _display_success(result, manager)
 
     except (ValueError, RuntimeError, OSError, ShellError) as e:
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1)
-
-
-def _create_bootstrap_service(
-    manager: ManagerChoice = ManagerChoice.pyenv,
-) -> EnvironmentBootstrapService:
-    """Factory: build the service with the chosen manager backend.
-
-    Factory Pattern + Dependency Injection.
-    Single point of creation – facilitates testing and implementation substitution.
-    """
-    if manager == ManagerChoice.uv:
-        return EnvironmentBootstrapService(
-            python_env_manager=UvPythonManager(),
-            dependency_manager=UvDependencyManager(),
-            editor_writer=VSCodeWriter(),
-            logger=RichLogger(),
-        )
-    # Default: pyenv + Poetry
-    return EnvironmentBootstrapService(
-        python_env_manager=PyenvManager(),
-        dependency_manager=PoetryManager(),
-        editor_writer=VSCodeWriter(),
-        logger=RichLogger(),
-    )
 
 
 def _display_success(

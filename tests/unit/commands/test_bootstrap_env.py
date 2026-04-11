@@ -7,7 +7,12 @@ from typer.testing import CliRunner
 
 from api_bootstrapper_cli.cli import app
 from api_bootstrapper_cli.commands.bootstrap_env import _display_success
+from api_bootstrapper_cli.core.bootstrap_env_use_case import (
+    BootstrapEnvironmentRequest,
+    BootstrapEnvironmentResponse,
+)
 from api_bootstrapper_cli.core.environment_service import EnvironmentSetupResult
+from api_bootstrapper_cli.core.protocols import ManagerChoice
 from api_bootstrapper_cli.core.shell import ShellError
 from tests.conftest import strip_ansi_codes
 
@@ -28,14 +33,14 @@ def _make_result(
     )
 
 
-@patch("api_bootstrapper_cli.commands.bootstrap_env._create_bootstrap_service")
+@patch("api_bootstrapper_cli.commands.bootstrap_env.BootstrapEnvironmentUseCase")
 def test_should_exit_1_and_show_message_on_value_error(
-    mock_factory: MagicMock, tmp_path: Path
+    mock_use_case: MagicMock, tmp_path: Path
 ):
     """bootstrap-env must catch ValueError and exit with code 1."""
-    mock_service = MagicMock()
-    mock_service.bootstrap.side_effect = ValueError("pyenv not found in PATH")
-    mock_factory.return_value = mock_service
+    mock_use_case.return_value.execute.side_effect = ValueError(
+        "pyenv not found in PATH"
+    )
 
     result = runner.invoke(app, ["bootstrap-env", "--path", str(tmp_path)])
     output = strip_ansi_codes(result.stdout)
@@ -45,16 +50,14 @@ def test_should_exit_1_and_show_message_on_value_error(
     assert "pyenv not found" in output
 
 
-@patch("api_bootstrapper_cli.commands.bootstrap_env._create_bootstrap_service")
+@patch("api_bootstrapper_cli.commands.bootstrap_env.BootstrapEnvironmentUseCase")
 def test_should_exit_1_and_show_message_on_runtime_error(
-    mock_factory: MagicMock, tmp_path: Path
+    mock_use_case: MagicMock, tmp_path: Path
 ):
     """bootstrap-env must catch RuntimeError (domain errors) and exit code 1."""
-    mock_service = MagicMock()
-    mock_service.bootstrap.side_effect = RuntimeError(
+    mock_use_case.return_value.execute.side_effect = RuntimeError(
         "[poetry] Falha ao instalar dependências: …"
     )
-    mock_factory.return_value = mock_service
 
     result = runner.invoke(app, ["bootstrap-env", "--path", str(tmp_path)])
     output = strip_ansi_codes(result.stdout)
@@ -64,20 +67,52 @@ def test_should_exit_1_and_show_message_on_runtime_error(
     assert "Falha ao instalar" in output
 
 
-@patch("api_bootstrapper_cli.commands.bootstrap_env._create_bootstrap_service")
+@patch("api_bootstrapper_cli.commands.bootstrap_env.BootstrapEnvironmentUseCase")
 def test_should_exit_1_and_show_message_on_shell_error(
-    mock_factory: MagicMock, tmp_path: Path
+    mock_use_case: MagicMock, tmp_path: Path
 ):
     """bootstrap-env must catch ShellError and exit with code 1."""
-    mock_service = MagicMock()
-    mock_service.bootstrap.side_effect = ShellError("Command failed: poetry install")
-    mock_factory.return_value = mock_service
+    mock_use_case.return_value.execute.side_effect = ShellError(
+        "Command failed: poetry install"
+    )
 
     result = runner.invoke(app, ["bootstrap-env", "--path", str(tmp_path)])
     output = strip_ansi_codes(result.stdout)
 
     assert result.exit_code == 1
     assert "Error:" in output
+
+
+@patch("api_bootstrapper_cli.commands.bootstrap_env.BootstrapEnvironmentUseCase")
+def test_should_call_use_case_with_bootstrap_request(
+    mock_use_case: MagicMock, tmp_path: Path
+):
+    mock_use_case.return_value.execute.return_value = BootstrapEnvironmentResponse(
+        environment=_make_result(venv_path=tmp_path / ".venv")
+    )
+
+    result = runner.invoke(
+        app,
+        [
+            "bootstrap-env",
+            "--path",
+            str(tmp_path),
+            "--python",
+            "3.12.12",
+            "--no-install",
+            "--manager",
+            "uv",
+        ],
+    )
+
+    assert result.exit_code == 0
+    execute_call = mock_use_case.return_value.execute.call_args
+    request = execute_call.args[0]
+    assert isinstance(request, BootstrapEnvironmentRequest)
+    assert request.project_root == tmp_path.resolve()
+    assert request.python_version == "3.12.12"
+    assert request.install_dependencies is False
+    assert request.manager == ManagerChoice.uv
 
 
 def test_display_success_unix_plain_path(tmp_path: Path, capsys):
