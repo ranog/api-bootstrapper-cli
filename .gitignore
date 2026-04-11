@@ -73,6 +73,8 @@ docs/_build/
 
 # Local planning files
 TASKS.md
+roadmap.md
+.codex
 
 # PyBuilder
 .pybuilder/
