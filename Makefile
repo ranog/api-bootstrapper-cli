@@ -1,8 +1,9 @@
-.PHONY: help install test test-cov test-unit test-integration test-e2e lint format type-check check pre-commit sync-skills validate-skills clean
+.PHONY: help install run-api test test-cov test-unit test-integration test-e2e lint format type-check check pre-commit sync-skills validate-skills clean
 
 help:
 	@echo "Available commands:"
 	@echo "  make install          - Install dependencies with Poetry"
+	@echo "  make run-api          - Run HTTP API server (FastAPI + Uvicorn)"
 	@echo "  make test             - Run all tests"
 	@echo "  make test-cov         - Run tests with coverage report"
 	@echo "  make test-unit        - Run only unit tests"
@@ -19,6 +20,9 @@ help:
 
 install:
 	poetry install
+
+run-api:
+	poetry run api-bootstrapper-api
 
 test:
 	poetry run pytest -n auto --cov=src/api_bootstrapper_cli --cov-report=term-missing --cov-report=html

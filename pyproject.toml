@@ -33,6 +33,8 @@ python = "^3.12"
 click = "^8.3.1"
 typer = "^0.24.0"
 rich = "^14.3.2"
+fastapi = "^0.115.0"
+uvicorn = "^0.44.0"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^4.5.1"
@@ -47,6 +49,7 @@ virtualenv = "^20.38.0"
 
 [tool.poetry.scripts]
 api-bootstrapper = "api_bootstrapper_cli.cli:main"
+api-bootstrapper-api = "api_bootstrapper_cli.api.server:main"
 
 [build-system]
 requires = ["poetry-core"]
