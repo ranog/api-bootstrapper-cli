@@ -23,6 +23,7 @@ Automates the setup of **pyenv + Poetry** or **uv**, plus **VSCode** configurati
 - 🎯 **Zero Configuration** - Creates minimal `pyproject.toml` and adds default API dependencies for new projects
 - 🔒 **Environment Isolation** - Clean environment to prevent version conflicts
 - 🔄 **Pluggable Backends** - Choose between pyenv/Poetry (default) or uv via `--manager`
+- 🌐 **HTTP Platform API** - Run a FastAPI server and trigger bootstrap flows via HTTP
 - ✅ **Battle-tested** - Comprehensive test suite with high coverage
 
 ---
@@ -162,6 +163,69 @@ source .venv/bin/activate
 ```
 
 > **Note:** The CLI automatically detects paths with spaces or accents (e.g., `/Área de Trabalho/project`) and shows `source $(poetry env info --path)/bin/activate` which handles special characters reliably.
+
+---
+
+## 🌐 HTTP API (Platform Mode)
+
+You can run the same bootstrap engine through an HTTP API (FastAPI), not only via CLI.
+
+### Start the API
+
+```bash
+# From source checkout
+make run-api
+
+# Equivalent command
+poetry run api-bootstrapper-api
+```
+
+Server default:
+- Base URL: `http://localhost:8000`
+- OpenAPI docs: `http://localhost:8000/docs`
+
+### Health check
+
+```bash
+curl -s http://localhost:8000/health
+```
+
+Expected response:
+
+```json
+{"status":"ok"}
+```
+
+### Bootstrap environment via API
+
+```bash
+curl -s -X POST "http://localhost:8000/bootstrap-env" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "path": "./my-project",
+    "python_version": "3.12.12",
+    "install_dependencies": true,
+    "manager": "uv"
+  }'
+```
+
+Example success response:
+
+```json
+{
+  "python_version": "3.12.12",
+  "python_path": "/home/user/.local/share/uv/python/cpython-3.12.12/bin/python3.12",
+  "venv_path": "/home/user/my-project/.venv",
+  "venv_python": "/home/user/my-project/.venv/bin/python",
+  "editor_config_path": "/home/user/my-project/.vscode/settings.json",
+  "has_poetry_project": true
+}
+```
+
+### Error behavior
+
+- `400`: invalid bootstrap preconditions (for example, manager not installed)
+- `500`: execution failed while running bootstrap operations
 
 ---
 
